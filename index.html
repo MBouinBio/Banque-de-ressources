@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Veille Scientifique - Écoles Européennes</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #3b82f6;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --badge-bg: #eff6ff;
+      --badge-text: #1d4ed8;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); line-height: 1.5; padding-bottom: 40px; }
+
+    /* Header & Navigation */
+    header { background: var(--card-bg); border-bottom: 1px solid var(--border); sticky: top; position: sticky; top: 0; z-index: 100; }
+    .header-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; }
+    .logo { font-weight: 700; font-size: 1.25rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    nav { display: flex; gap: 12px; }
+    .nav-btn { background: none; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
+    .nav-btn:hover { color: var(--primary); background: var(--badge-bg); }
+    .nav-btn.active { color: #ffffff; background: var(--primary); }
+
+    /* Container global */
+    .container { max-width: 1200px; margin: 24px auto; padding: 0 24px; }
+
+    /* Intro Banner */
+    .intro-banner { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px; border-left: 5px solid var(--primary-light); }
+    .intro-banner p { color: #334155; font-size: 0.98rem; }
+
+    /* Layout principal */
+    .layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; transition: all 0.3s ease; }
+    .layout.full-width { grid-template-columns: 1fr; max-width: 800px; margin: 0 auto; }
+
+    /* Sidebar Filtres */
+    .sidebar { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; height: fit-content; display: flex; flex-direction: column; gap: 20px; }
+    .filter-group { display: flex; flex-direction: column; gap: 8px; }
+    .filter-group label { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
+    .filter-group select, .filter-group input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; background: var(--bg); outline: none; }
+    .filter-group select:focus, .filter-group input:focus { border-color: var(--primary-light); background: #fff; }
+
+    /* Nuage de mots-clés */
+    .tags-container { display: flex; flex-wrap: wrap; gap: 6px; max-height: 140px; overflow: hidden; transition: max-height 0.3s ease; }
+    .tags-container.expanded { max-height: 1000px; }
+    .tag-chip { font-size: 0.75rem; padding: 4px 10px; background: #f1f5f9; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; user-select: none; }
+    .tag-chip:hover { background: var(--badge-bg); color: var(--badge-text); }
+    .tag-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .toggle-tags-btn { background: none; border: none; color: var(--primary-light); font-size: 0.8rem; font-weight: 600; cursor: pointer; text-align: left; padding: 4px 0; }
+
+    /* Grille de cartes */
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+    .card-img { width: 100%; height: 160px; object-fit: cover; background-color: #e2e8f0; }
+    .card-body { padding: 16px; display: flex; flex-direction: column; flex-grow: 1; gap: 12px; }
+    .card-title { font-size: 1rem; font-weight: 600; color: var(--text); text-decoration: none; line-height: 1.3; }
+    .card-title:hover { color: var(--primary-light); }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+    .badge { font-size: 0.7rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
+    .badge-niveau { background: #dbeafe; color: #1e40af; }
+    .badge-theme { background: #fef3c7; color: #92400e; }
+    .badge-keyword { background: #f1f5f9; color: #475569; }
+
+    /* Pages auxiiaires (Proposer / À propos) */
+    .page-content { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; display: none; }
+    .page-content.active { display: block; }
+    .page-title { font-size: 1.5rem; color: var(--primary); margin-bottom: 16px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; }
+    .submit-btn { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-container">
+      <div class="logo">🧬 Veille Sciences EE</div>
+      <nav>
+        <button class="nav-btn active" onclick="switchTab('ressources')">Ressources</button>
+        <button class="nav-btn" onclick="switchTab('proposer')">Proposer</button>
+        <button class="nav-btn" onclick="switchTab('apropos')">À propos</button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    
+    <!-- Banner Intro (Visible uniquement sur l'onglet Ressources) -->
+    <div id="intro-banner" class="intro-banner">
+      <p>Ce site s'adresse aux professeurs de biologie des écoles européennes. Il regroupe différents liens vers des ressources (articles de journaux généralistes ou scientifiques, vidéos...) utiles pour l'enseignement des sciences intégrées, de la biologie et du cours de STS.</p>
+    </div>
+
+    <div id="main-layout" class="layout">
+      
+      <!-- Colonne Filtres (Gauche) -->
+      <aside id="sidebar-filters" class="sidebar">
+        
+        <div class="filter-group">
+          <label>🔍 Recherche</label>
+          <input type="text" id="search-input" placeholder="Ex: ADN, climat, cellules..." oninput="applyFilters()">
+        </div>
+
+        <div class="filter-group">
+          <label>🏷️ Mots-Clés</label>
+          <div id="tags-cloud" class="tags-container"></div>
+          <button id="toggle-tags" class="toggle-tags-btn" onclick="toggleTags()">Voir plus de mots-clés (+)</button>
+        </div>
+
+        <div class="filter-group">
+          <label>🎓 Niveau</label>
+          <select id="filter-niveau" onchange="applyFilters()">
+            <option value="">Tous les niveaux</option>
+            <option value="SCI S1">SCI S1</option>
+            <option value="SCI S2">SCI S2</option>
+            <option value="SCI S3">SCI S3</option>
+            <option value="S4 bio">S4 bio</option>
+            <option value="S5 bio">S5 bio</option>
+            <option value="S6 bio 4">S6 bio 4</option>
+            <option value="S7 bio 4">S7 bio 4</option>
+            <option value="S6 STS">S6 STS</option>
+            <option value="S7 STS">S7 STS</option>
+            <option value="Labo bio">Labo bio</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>📚 Thème</label>
+          <select id="filter-theme" onchange="applyFilters()">
+            <option value="">Tous les thèmes</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>🎬 Type de contenu</label>
+          <select id="filter-type" onchange="applyFilters()">
+            <option value="">Tous les types</option>
+            <option value="Article de presse">Article de presse</option>
+            <option value="Revue scientifique">Revue scientifique</option>
+            <option value="Vidéo">Vidéo</option>
+            <option value="Simulation">Simulation / TP</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>🌐 Langue</label>
+          <select id="filter-langue" onchange="applyFilters()">
+            <option value="">Toutes les langues</option>
+            <option value="FR">Français</option>
+            <option value="EN">Anglais</option>
+            <option value="DE">Allemand</option>
+          </select>
+        </div>
+
+      </aside>
+
+      <!-- Zone Principale (Ressources / Grille de Cartes) -->
+      <main id="content-ressources">
+        <div id="cards-container" class="cards-grid">
+          <p>Chargement des ressources...</p>
+        </div>
+      </main>
+
+      <!-- Section Proposer (Masquée par défaut) -->
+      <div id="content-proposer" class="page-content">
+        <h2 class="page-title">Proposer une ressource</h2>
+        <p style="margin-bottom: 20px; color: var(--text-muted);">Vous avez trouvé un article ou une vidéo pertinente pour les programmes ? Proposez le lien ci-dessous. La ressource sera ajoutée après validation.</p>
+        
+        <form onsubmit="event.preventDefault(); alert('Merci ! Votre proposition a été envoyée pour validation.'); this.reset();">
+          <div class="form-group">
+            <label>Lien URL de la ressource *</label>
+            <input type="url" required placeholder="https://www.lemonde.fr/sciences/...">
+          </div>
+          <div class="form-group">
+            <label>Niveau(x) concerné(s)</label>
+            <input type="text" placeholder="Ex: S4 bio, SCI S3">
+          </div>
+          <div class="form-group">
+            <label>Thème du programme</label>
+            <input type="text" placeholder="Ex: Génétique, Écologie">
+          </div>
+          <div class="form-group">
+            <label>Mots-clés (séparés par des virgules)</label>
+            <input type="text" placeholder="Ex: ADN, cellules, mutation">
+          </div>
+          <button type="submit" class="submit-btn">Envoyer la suggestion</button>
+        </form>
+      </div>
+
+      <!-- Section À propos (Masquée par défaut) -->
+      <div id="content-apropos" class="page-content">
+        <h2 class="page-title">À propos de la plateforme</h2>
+        <p style="margin-bottom: 12px;">Cette plateforme collaboratrice est un outil de veille pédagogique dédié aux enseignants des Écoles Européennes (EE).</p>
+        <p style="margin-bottom: 12px;">Elle a pour but d'offrir un accès rapide et catégorisé à des contenus scientifiques d'actualité pour enrichir les cours de <strong>Sciences Intégrées (S1-S3)</strong>, de <strong>Biologie (S4-S7)</strong> et de <strong>STS (Sciences, Technologie et Société)</strong>.</p>
+        <p>Les données sont modérées par l'équipe d'orientation et de coordination de biologie.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // URL directe de votre Google Sheet au format CSV
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRAEdBoVwgqy_IziFBAGVWHKItqDBAby-m72IGkLwzbBDyJGYqwLv0aKDPwiwYEpS-CZI5DG2GUd5fF/pub?output=csv';
+
+    let allResources = [];
+    let selectedTag = null;
+
+    // 1. Chargement des données CSV depuis Google Sheets
+    async function loadData() {
+      try {
+        const response = await fetch(CSV_URL);
+        const data = await response.text();
+        allResources = parseCSV(data);
+        
+        populateThemesDropdown();
+        renderTagsCloud();
+        renderCards(allResources);
+      } catch (error) {
+        document.getElementById('cards-container').innerHTML = '<p>Erreur lors du chargement des ressources.</p>';
+      }
+    }
+
+    // Convertisseur CSV simple vers Objet JS
+    function parseCSV(text) {
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length <= 1) return [];
+
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+      const results = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        // Gestion basique des virgules dans le CSV
+        const currentline = lines[i].split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/);
+        const entry = {};
+        
+        headers.forEach((header, index) => {
+          let val = currentline[index] ? currentline[index].trim() : '';
+          val = val.replace(/^"|"$/g, ''); // Enlever les guillemets
+          entry[header] = val;
+        });
+
+        // Filtrer uniquement les ressources validées
+        if (!entry.Statut || entry.Statut.toLowerCase().includes('valid')) {
+          results.push(entry);
+        }
+      }
+      return results;
+    }
+
+    // 2. Extraire et afficher l'aperçu Open Graph (Image + Titre via l'API Microlink)
+    function renderCards(resources) {
+      const container = document.getElementById('cards-container');
+      container.innerHTML = '';
+
+      if (resources.length === 0) {
+        container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px 0;">Aucune ressource ne correspond à vos filtres.</p>';
+        return;
+      }
+
+      resources.forEach(res => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        // Utilisation d'une API d'aperçu d'images OpenGraph gratuite
+        const previewApi = `https://api.microlink.io?url=${encodeURIComponent(res.URL)}`;
+
+        const niveauxBadges = res.Niveau ? res.Niveau.split(',').map(n => `<span class="badge badge-niveau">${n.trim()}</span>`).join('') : '';
+        const themeBadges = res.Theme ? res.Theme.split(',').map(t => `<span class="badge badge-theme">${t.trim()}</span>`).join('') : '';
+        const keywordBadges = res.Mots_Cles ? res.Mots_Cles.split(',').map(k => `<span class="badge badge-keyword">${k.trim()}</span>`).join('') : '';
+
+        card.innerHTML = `
+          <img class="card-img" id="img-${btoa(res.URL).replace(/=/g, '')}" src="https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=500&auto=format&fit=crop&q=60" alt="Article preview">
+          <div class="card-body">
+            <a href="${res.URL}" target="_blank" class="card-title" id="title-${btoa(res.URL).replace(/=/g, '')}">Chargement du titre...</a>
+            <div class="card-tags">
+              ${niveauxBadges}
+              ${themeBadges}
+              ${keywordBadges}
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+
+        // Fetch dynamique des métadonnées (Aperçu style Facebook)
+        fetch(previewApi)
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'success' && data.data) {
+              const imgEl = document.getElementById(`img-${btoa(res.URL).replace(/=/g, '')}`);
+              const titleEl = document.getElementById(`title-${btoa(res.URL).replace(/=/g, '')}`);
+              
+              if (data.data.image && data.data.image.url) {
+                imgEl.src = data.data.image.url;
+              }
+              if (data.data.title) {
+                titleEl.textContent = data.data.title;
+              } else {
+                titleEl.textContent = res.URL;
+              }
+            }
+          })
+          .catch(() => {
+            document.getElementById(`title-${btoa(res.URL).replace(/=/g, '')}`).textContent = res.URL;
+          });
+      });
+    }
+
+    // 3. Remplir dynamiquement la liste des thèmes dans le menu déroulant
+    function populateThemesDropdown() {
+      const themeSelect = document.getElementById('filter-theme');
+      const themesSet = new Set();
+
+      allResources.forEach(r => {
+        if (r.Theme) {
+          r.Theme.split(',').forEach(t => themesSet.add(t.trim()));
+        }
+      });
+
+      themesSet.forEach(theme => {
+        const option = document.createElement('option');
+        option.value = theme;
+        option.textContent = theme;
+        themeSelect.appendChild(option);
+      });
+    }
+
+    // 4. Générer le nuage de mots-clés dans la sidebar
+    function renderTagsCloud() {
+      const container = document.getElementById('tags-cloud');
+      const keywordsSet = new Set();
+
+      allResources.forEach(r => {
+        if (r.Mots_Cles) {
+          r.Mots_Cles.split(',').forEach(k => keywordsSet.add(k.trim()));
+        }
+      });
+
+      container.innerHTML = '';
+      keywordsSet.forEach(kw => {
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.textContent = kw;
+        chip.onclick = () => filterByTag(kw, chip);
+        container.appendChild(chip);
+      });
+    }
+
+    function toggleTags() {
+      const container = document.getElementById('tags-cloud');
+      const btn = document.getElementById('toggle-tags');
+      container.classList.toggle('expanded');
+      btn.textContent = container.classList.contains('expanded') ? 'Réduire (-)' : 'Voir plus de mots-clés (+)';
+    }
+
+    function filterByTag(tag, element) {
+      if (selectedTag === tag) {
+        selectedTag = null;
+        element.classList.remove('active');
+      } else {
+        document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
+        selectedTag = tag;
+        element.classList.add('active');
+      }
+      applyFilters();
+    }
+
+    // 5. Application des filtres croisés
+    function applyFilters() {
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const niveau = document.getElementById('filter-niveau').value;
+      const theme = document.getElementById('filter-theme').value;
+      const type = document.getElementById('filter-type').value;
+      const langue = document.getElementById('filter-langue').value;
+
+      const filtered = allResources.filter(r => {
+        const matchesSearch = !search || 
+          (r.Mots_Cles && r.Mots_Cles.toLowerCase().includes(search)) || 
+          (r.Theme && r.Theme.toLowerCase().includes(search)) ||
+          (r.URL && r.URL.toLowerCase().includes(search));
+
+        const matchesNiveau = !niveau || (r.Niveau && r.Niveau.includes(niveau));
+        const matchesTheme = !theme || (r.Theme && r.Theme.includes(theme));
+        const matchesType = !type || (r.Type_Contenu && r.Type_Contenu.includes(type));
+        const matchesLangue = !langue || (r.Langue && r.Langue.includes(langue));
+        const matchesTag = !selectedTag || (r.Mots_Cles && r.Mots_Cles.includes(selectedTag));
+
+        return matchesSearch && matchesNiveau && matchesTheme && matchesType && matchesLangue && matchesTag;
+      });
+
+      renderCards(filtered);
+    }
+
+    // 6. Navigation entre les onglets
+    function switchTab(tabName) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const layout = document.getElementById('main-layout');
+      const sidebar = document.getElementById('sidebar-filters');
+      const intro = document.getElementById('intro-banner');
+      const resContainer = document.getElementById('content-ressources');
+      const proposerContainer = document.getElementById('content-proposer');
+      const aproposContainer = document.getElementById('content-apropos');
+
+      if (tabName === 'ressources') {
+        layout.classList.remove('full-width');
+        sidebar.style.display = 'flex';
+        intro.style.display = 'block';
+        resContainer.style.display = 'block';
+        proposerContainer.classList.remove('active');
+        aproposContainer.classList.remove('active');
+      } else {
+        layout.classList.add('full-width');
+        sidebar.style.display = 'none';
+        intro.style.display = 'none';
+        resContainer.style.display = 'none';
+
+        if (tabName === 'proposer') {
+          proposerContainer.classList.add('active');
+          aproposContainer.classList.remove('active');
+        } else if (tabName === 'apropos') {
+          aproposContainer.classList.add('active');
+          proposerContainer.classList.remove('active');
+        }
+      }
+    }
+
+    // Démarrage
+    loadData();
+  </script>
+</body>
+</html>
