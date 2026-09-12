@@ -3,613 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Veille Pédagogique Biologie, SCI et STS</title>
-    <!-- Le fichier CSS sera lié ici -->
+    <title>Veille Pédagogique Science & STS</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body data-lang="FR">
-
-    <!-- ========================================== -->
-    <!-- SPRITE SVG (Caché, pour héritage CSS)      -->
-    <!-- ========================================== -->
+<body>
+    <!-- INSERER ICI LE SPRITE SVG DE L'ANNEXE 3 -->
     <svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
-    <!-- DÉBUT DU SPRITE SVG (Bibliothèque d'icônes cachée) -->
-<svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
-
-  <symbol id="cooking" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M2 12h20"/>
-    <path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/>
-    <path d="m4 8 16-4"/>
-    <path d="m8.86 6.78-.45-1.81a2 2 0 0 1 1.45-2.43l1.94-.48a2 2 0 0 1 2.43 1.46l.45 1.8"/>
-  </symbol>
-
-  <symbol id="flask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/>
-    <path d="M6.453 15h11.094"/>
-    <path d="M8.5 2h7"/>
-  </symbol>
-
-  <symbol id="bike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="18.5" cy="17.5" r="3.5"/>
-    <circle cx="5.5" cy="17.5" r="3.5"/>
-    <circle cx="15" cy="5" r="1"/>
-    <path d="M12 17.5V14l-3-3 4-3 2 3h2"/>
-  </symbol>
-
-  <symbol id="baby" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/>
-    <path d="M15 12h.01"/>
-    <path d="M19.38 6.813A9 9 0 0 1 20.8 10.2a2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"/>
-    <path d="M9 12h.01"/>
-  </symbol>
-
-  <symbol id="galaxy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M16.005 15.108a5.041 6.52 28.25 00-8.008-6.217 5.041 6.52 28.25 008.008 6.217A11.884 7.288-60.76 014.029 7.001"/>
-    <path d="M17 21h.01"/>
-    <path d="M7 3h.01"/>
-    <path d="M7.997 8.891a11.885 7.288-60.756 0111.977 8.107"/>
-    <circle cx="12" cy="12" r="1" fill="currentColor"/>
-  </symbol>
-
-  <symbol id="atom" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="1"/>
-    <path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"/>
-    <path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"/>
-  </symbol>
-
-  <symbol id="eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/>
-    <circle cx="12" cy="12" r="3"/>
-  </symbol>
-
-  <symbol id="heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
-    <path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>
-  </symbol>
-
-  <symbol id="cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M11 10.27 7 3.34"/>
-    <path d="m11 13.73-4 6.93"/>
-    <path d="M12 22v-2"/>
-    <path d="M12 2v2"/>
-    <path d="M14 12h8"/>
-    <path d="m17 20.66-1-1.73"/>
-    <path d="m17 3.34-1 1.73"/>
-    <path d="M2 12h2"/>
-    <path d="m20.66 17-1.73-1"/>
-    <path d="m20.66 7-1.73 1"/>
-    <path d="m3.34 17 1.73-1"/>
-    <path d="m3.34 7 1.73 1"/>
-    <circle cx="12" cy="12" r="2"/>
-    <circle cx="12" cy="12" r="8"/>
-  </symbol>
-
-  <symbol id="houseplug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10 12V8.964"/>
-    <path d="M14 12V8.964"/>
-    <path d="M15 12a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2a1 1 0 0 1 1-1z"/>
-    <path d="M8.5 21H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2h-5a2 2 0 0 1-2-2v-2"/>
-  </symbol>
-
-  <symbol id="battery" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m11 7-3 5h4l-3 5"/>
-    <path d="M14.856 6H16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.935"/>
-    <path d="M22 14v-4"/>
-    <path d="M5.14 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2.936"/>
-  </symbol>
-
-  <symbol id="cable" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M17 19a1 1 0 0 1-1-1v-2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a1 1 0 0 1-1 1z"/>
-    <path d="M17 21v-2"/>
-    <path d="M19 14V6.5a1 1 0 0 0-7 0v11a1 1 0 0 1-7 0V10"/>
-    <path d="M21 21v-2"/>
-    <path d="M3 5V3"/>
-    <path d="M4 10a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2z"/>
-    <path d="M7 5V3"/>
-  </symbol>
-
-  <symbol id="magnet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m12 15 4 4"/>
-    <path d="M2.352 10.648a1.205 1.205 0 0 0 0 1.704l2.296 2.296a1.205 1.205 0 0 0 1.704 0l6.029-6.029a1 1 0 1 1 3 3l-6.029 6.029a1.205 1.205 0 0 0 0 1.704l2.296 2.296a1.205 1.205 0 0 0 1.704 0l6.365-6.367A1 1 0 0 0 8.716 4.282z"/>
-    <path d="m5 8 4 4"/>
-  </symbol>
-
-  <symbol id="bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 8V4H8"/>
-    <rect width="16" height="12" x="4" y="8" rx="2"/>
-    <path d="M2 14h2"/>
-    <path d="M20 14h2"/>
-    <path d="M15 13v2"/>
-    <path d="M9 13v2"/>
-  </symbol>
-
-  <symbol id="tractor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m10 11 11 .9a1 1 0 0 1 .8 1.1l-.665 4.158a1 1 0 0 1-.988.842H20"/>
-    <path d="M16 18h-5"/>
-    <path d="M18 5a1 1 0 0 0-1 1v5.573"/>
-    <path d="M3 4h8.129a1 1 0 0 1 .99.863L13 11.246"/>
-    <path d="M4 11V4"/>
-    <path d="M7 15h.01"/>
-    <path d="M8 10.1V4"/>
-    <circle cx="18" cy="18" r="2"/>
-    <circle cx="7" cy="15" r="5"/>
-  </symbol>
-
-  <symbol id="trees" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10 10v.2A3 3 0 0 1 8.9 16H5a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0Z"/>
-    <path d="M7 16v6"/>
-    <path d="M13 19v3"/>
-    <path d="M12 19h8.3a1 1 0 0 0 .7-1.7L18 14h.3a1 1 0 0 0 .7-1.7L16 9h.2a1 1 0 0 0 .8-1.7L13 3l-1.4 1.5"/>
-  </symbol>
-
-  <symbol id="sprout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M14 9.536V7a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V5a4 4 0 0 1-4 4 4 4 0 0 0-4 4c0 2 1 3 1 5a5 5 0 0 1-1 3"/>
-    <path d="M4 9a5 5 0 0 1 8 4 5 5 0 0 1-8-4"/>
-    <path d="M5 21h14"/>
-  </symbol>
-
-  <symbol id="folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20 10a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2.5a1 1 0 0 1-.8-.4l-.9-1.2A1 1 0 0 0 15 3h-2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"/>
-    <path d="M20 21a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1h-2.9a1 1 0 0 1-.88-.55l-.42-.85a1 1 0 0 0-.92-.6H13a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"/>
-    <path d="M3 5a2 2 0 0 0 2 2h3"/>
-    <path d="M3 3v13a2 2 0 0 0 2 2h3"/>
-  </symbol>
-
-  <symbol id="microscope" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M6 18h8"/>
-    <path d="M3 22h18"/>
-    <path d="M14 22a7 7 0 1 0 0-14h-1"/>
-    <path d="M9 14h2"/>
-    <path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/>
-    <path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>
-  </symbol>
-
-  <symbol id="cell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m11 2 .925 1.848"/>
-    <path d="M13 15h.01"/>
-    <path d="m16 21-1-2.472"/>
-    <path d="m19 2-1 1.804"/>
-    <path d="m2 19 2.746-1.373"/>
-    <path d="m22 16-2.474-2.13"/>
-    <path d="m22 5-1.804 1"/>
-    <path d="m3 10 2 2"/>
-    <path d="M9 16h.01"/>
-    <path d="M9 20v2"/>
-    <path d="M9.33 7.035c-.51 1.478-1.786 2.93-3.09 3.794A5 5 0 009 20a12.1 12.1 0 0011.902-9.916A6 6 0 009.33 7.035"/>
-    <circle cx="15" cy="9" r="2"/>
-  </symbol>
-
-  <symbol id="magnifying" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m21 21-4.34-4.34"/>
-    <circle cx="11" cy="11" r="8"/>
-  </symbol>
-
-  <symbol id="phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/>
-  </symbol>
-
-  <symbol id="van" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M13 6v5a1 1 0 0 0 1 1h6.102a1 1 0 0 1 .712.298l.898.91a1 1 0 0 1 .288.702V17a1 1 0 0 1-1 1h-3"/>
-    <path d="M5 18H3a1 1 0 0 1-1-1V8a2 2 0 0 1 2-2h12c1.1 0 2.1.8 2.4 1.8l1.176 4.2"/>
-    <path d="M9 18h5"/>
-    <circle cx="16" cy="18" r="2"/>
-    <circle cx="7" cy="18" r="2"/>
-  </symbol>
-
-  <symbol id="siren" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M7 18v-6a5 5 0 1 1 10 0v6"/>
-    <path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z"/>
-    <path d="M21 12h1"/>
-    <path d="M18.5 4.5 18 5"/>
-    <path d="M2 12h1"/>
-    <path d="M12 2v1"/>
-    <path d="m4.929 4.929.707.707"/>
-    <path d="M12 12v6"/>
-  </symbol>
-
-  <symbol id="sex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10 20h4"/>
-    <path d="M12 16v6"/>
-    <path d="M17 2h4v4"/>
-    <path d="m21 2-5.46 5.46"/>
-    <circle cx="12" cy="11" r="5"/>
-  </symbol>
-
-  <symbol id="dna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m10 16 1.5 1.5"/>
-    <path d="m14 8-1.5-1.5"/>
-    <path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993"/>
-    <path d="m16.5 10.5 1 1"/>
-    <path d="m17 6-2.891-2.891"/>
-    <path d="M2 15c6.667-6 13.333 0 20-6"/>
-    <path d="m20 9 .891.891"/>
-    <path d="M3.109 14.109 4 15"/>
-    <path d="m6.5 12.5 1 1"/>
-    <path d="m7 18 2.891 2.891"/>
-    <path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993"/>
-  </symbol>
-
-  <symbol id="person" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="5" r="1"/>
-    <path d="m9 20 3-6 3 6"/>
-    <path d="m6 8 6 2 6-2"/>
-    <path d="M12 10v4"/>
-  </symbol>
-
-  <symbol id="time" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10 2h4"/>
-    <path d="M12 14v-4"/>
-    <path d="M4 13a8 8 0 0 1 8-7 8 8 0 1 1-5.3 14L4 17.6"/>
-    <path d="M9 17H4v5"/>
-  </symbol>
-
-  <symbol id="earth" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M21.54 15H17a2 2 0 0 0-2 2v4.54"/>
-    <path d="M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17"/>
-    <path d="M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05"/>
-    <circle cx="12" cy="12" r="10"/>
-  </symbol>
-
-  <symbol id="brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 18V5"/>
-    <path d="M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4"/>
-    <path d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5"/>
-    <path d="M17.997 5.125a4 4 0 0 1 2.526 5.77"/>
-    <path d="M18 18a4 4 0 0 0 2-7.464"/>
-    <path d="M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517"/>
-    <path d="M6 18a4 4 0 0 1-2-7.464"/>
-    <path d="M6.003 5.125a4 4 0 0 0-2.526 5.77"/>
-  </symbol>
-
-  <symbol id="temperature" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 2v2"/>
-    <path d="M12 8a4 4 0 0 0-1.645 7.647"/>
-    <path d="M2 12h2"/>
-    <path d="M20 14.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/>
-    <path d="m4.93 4.93 1.41 1.41"/>
-    <path d="m6.34 17.66-1.41 1.41"/>
-  </symbol>
-
-  <symbol id="zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z"/>
-  </symbol>
-
-  <symbol id="food" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m16 2-2.3 2.3a3 3 0 0 0 0 4.2l1.8 1.8a3 3 0 0 0 4.2 0L22 8"/>
-    <path d="M15 15 3.3 3.3a4.2 4.2 0 0 0 0 6l7.3 7.3c.7.7 2 .7 2.8 0L15 15Zm0 0 7 7"/>
-    <path d="m2.1 21.8 6.4-6.3"/>
-    <path d="m19 5-7 7"/>
-  </symbol>
-
-  <symbol id="ambulance" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10 10H6"/>
-    <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
-    <path d="M19 18h2a1 1 0 0 0 1-1v-3.28a1 1 0 0 0-.684-.948l-1.923-.641a1 1 0 0 1-.578-.502l-1.539-3.076A1 1 0 0 0 16.382 8H14"/>
-    <path d="M8 8v4"/>
-    <path d="M9 18h6"/>
-    <circle cx="17" cy="18" r="2"/>
-    <circle cx="7" cy="18" r="2"/>
-  </symbol>
-
-  <symbol id="water" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>
-  </symbol>
-
-  <symbol id="presentation" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M2 3h20"/>
-    <path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/>
-    <path d="m7 21 5-5 5 5"/>
-  </symbol>
-
-  <!-- Icône de fallback (Sécurité en cas de nom erroné dans le tableur) -->
-  <symbol id="default-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="10"></circle>
-    <line x1="12" y1="8" x2="12" y2="12"></line>
-    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-  </symbol>
-
-</svg>
-<!-- FIN DU SPRITE SVG -->
-
-        <symbol id="flask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/>
-            <path d="M6.453 15h11.094"/><path d="M8.5 2h7"/>
-        </symbol>
-        <!-- Inclus ici un seul symbole pour l'exemple, tu colleras l'Annexe 3 complète -->
-        <symbol id="default-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </symbol>
+      <!-- (Garde le sprite complet fourni dans ton cahier des charges) -->
     </svg>
 
-    <!-- ========================================== -->
-    <!-- EN-TÊTE (HEADER)                           -->
-    <!-- ========================================== -->
-    <header class="app-header">
-        <div class="header-title">
-            <h1 class="lang-fr">Veille scientifique pour le programme des écoles européennes</h1>
-            <h1 class="lang-en">Scientific watch for the European Schools syllabus</h1>
+    <header>
+        <div class="header-titles">
+            <h1 class="fr-text">Veille scientifique pour le programme des écoles européennes</h1>
+            <h1 class="en-text hidden">Scientific watch for the European Schools syllabus</h1>
         </div>
-        <div class="header-controls">
-            <button id="btn-open-add-modal" class="btn-primary">
-                <span class="lang-fr">Proposer une ressource</span>
-                <span class="lang-en">Submit a resource</span>
+        <div class="header-actions">
+            <button id="btn-proposer" class="btn-primary">
+                <span class="fr-text">Proposer une ressource</span>
+                <span class="en-text hidden">Suggest a resource</span>
             </button>
-            <a href="#" id="link-about">
-                <span class="lang-fr">À propos</span>
-                <span class="lang-en">About</span>
-            </a>
-            <!-- Toggle Switch pour la langue -->
-            <div class="lang-switch-container">
+            <button id="btn-about" class="btn-secondary">
+                <span class="fr-text">À propos</span>
+                <span class="en-text hidden">About</span>
+            </button>
+            <div class="lang-switch">
                 <span>FR</span>
                 <label class="switch">
                     <input type="checkbox" id="lang-toggle">
-                    <span class="slider"></span>
+                    <span class="slider round"></span>
                 </label>
                 <span>EN</span>
             </div>
         </div>
     </header>
 
-    <!-- ========================================== -->
-    <!-- CONTENU PRINCIPAL                          -->
-    <!-- ========================================== -->
-    <main class="app-layout">
-        
-        <!-- BARRE LATÉRALE : FILTRES -->
-        <aside class="sidebar-filters">
-            <h2 class="lang-fr">Filtres</h2>
-            <h2 class="lang-en">Filters</h2>
+    <main>
+        <aside class="sidebar sticky">
+            <input type="text" id="search-input" placeholder="Recherche libre..." class="filter-input">
             
-            <div class="filter-group">
-                <input type="text" id="search-input" placeholder="Recherche libre..." class="lang-fr">
-                <input type="text" id="search-input-en" placeholder="Free search..." class="lang-en">
-            </div>
-
-            <div class="filter-group">
-                <label class="lang-fr">Niveau</label>
-                <label class="lang-en">Level</label>
-                <select id="filter-niveau"><option value="">Tous / All</option></select>
-            </div>
-
-            <div class="filter-group">
-                <label class="lang-fr">Thème</label>
-                <label class="lang-en">Topic</label>
-                <div id="filter-themes-container" class="tags-container">
-                    <!-- Généré dynamiquement par JS -->
-                </div>
-            </div>
-
-            <div class="filter-group">
-                <label class="lang-fr">Type de contenu</label>
-                <label class="lang-en">Content type</label>
-                <select id="filter-type"><option value="">Tous / All</option></select>
-            </div>
-
-            <div class="filter-group">
-                <label class="lang-fr">Langue</label>
-                <label class="lang-en">Language</label>
-                <div id="filter-langues-container" class="checkbox-group">
-                    <!-- Généré dynamiquement par JS pour sélection multiple -->
-                </div>
-            </div>
-
-            <div class="filter-group">
-                <label class="lang-fr">Proposé par</label>
-                <label class="lang-en">Submitted by</label>
-                <select id="filter-contributor"><option value="">Tous / All</option></select>
-            </div>
-
-            <div class="filter-group">
-                <label class="lang-fr">Établissement</label>
-                <label class="lang-en">School</label>
-                <select id="filter-school"><option value="">Tous / All</option></select>
-            </div>
+            <select id="filter-niveau" class="filter-input"><option value="">Tous les niveaux</option></select>
+            <select id="filter-theme" class="filter-input"><option value="">Tous les thèmes</option></select>
+            <select id="filter-type" class="filter-input"><option value="">Tous les types</option></select>
+            <select id="filter-langue" class="filter-input"><option value="">Toutes les langues</option></select>
+            <select id="filter-propose" class="filter-input"><option value="">Proposé par</option></select>
+            <select id="filter-etablissement" class="filter-input"><option value="">Établissement</option></select>
         </aside>
 
-        <!-- GRILLE D'AFFICHAGE -->
-        <section class="main-content">
-            <div id="resources-grid" class="cards-grid">
-                <!-- Les cartes seront injectées ici par JS -->
-            </div>
-            
-            <div class="load-more-container">
-                <button id="btn-load-more" class="btn-secondary" style="display: none;">
-                    <span class="lang-fr">Afficher plus</span>
-                    <span class="lang-en">Show more</span>
-                </button>
-            </div>
+        <section class="grid-container">
+            <div id="loading-indicator">Chargement des données... / Loading data...</div>
+            <div id="resources-grid" class="grid"></div>
+            <button id="btn-load-more" class="btn-secondary hidden">Afficher plus / Show more</button>
         </section>
-
     </main>
 
-    <!-- ========================================== -->
-    <!-- MODALES ET TOASTS                          -->
-    <!-- ========================================== -->
-
-    <!-- TOAST DE NOTIFICATION -->
-    <div id="toast-notification" class="toast hidden">
-        <span class="lang-fr">Ressource soumise avec succès, en attente de modération</span>
-        <span class="lang-en">Resource successfully submitted, pending moderation</span>
-    </div>
-
-    <!-- MODALE "À PROPOS" -->
+    <!-- Modale À Propos -->
     <div id="modal-about" class="modal hidden">
         <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <div class="lang-fr">
+            <span class="close">&times;</span>
+            <div class="fr-text">
                 <h2>À propos du projet</h2>
-                <p>Cette application de veille pédagogique est destinée aux enseignants de Sciences Intégrées, de Biologie et de STS des Écoles Européennes. Elle permet de mutualiser, catégoriser et rechercher des ressources multilingues adaptées à nos programmes.</p>
-                <p>L’analyse et le pré-tri des ressources sont assistés par une intelligence artificielle (Gemini).</p>
-                <p>Les contenus partagés demeurent la propriété de leurs auteurs respectifs et n'engagent pas la responsabilité de la plateforme ni des Écoles Européennes. Chaque ajout est modéré par des enseignants.</p>
-                <p>Si une ressource vous semble inappropriée, merci de le signaler. Pour toute question, <a href="mailto:marine.bouin@teacher.eursc.eu">contactez Marine Bouin</a> via les outils Microsoft 365 de l'école.</p>
+                <p>Cette application de veille pédagogique est destinée aux enseignants de Sciences Intégrées, de Biologie et de STS des Écoles Européennes... [TEXTE COMPLET ICI]</p>
             </div>
-            <div class="lang-en">
+            <div class="en-text hidden">
                 <h2>About the Project</h2>
-                <p>This educational watch application is designed for Integrated Science, Biology, and STS teachers in the European Schools. It allows users to share, categorize, and search for multilingual resources aligned with our syllabi.</p>
-                <p>The analysis and initial sorting of resources are assisted by Artificial Intelligence (Gemini).</p>
-                <p>Shared contents remain the property of their respective authors and do not reflect the views of the platform or the European Schools. Every submission is moderated by teachers.</p>
-                <p>If you find a resource inappropriate, please report it. For any inquiries, <a href="mailto:marine.bouin@teacher.eursc.eu">contact Marine Bouin</a> via the school's Microsoft 365 tools.</p>
+                <p>This educational watch application is designed for Integrated Science, Biology, and STS teachers in the European Schools... [TEXTE COMPLET ICI]</p>
             </div>
         </div>
     </div>
 
-    <!-- MODALE SIGNALEMENT LIEN MORT -->
-    <div id="modal-report" class="modal hidden">
+    <!-- Modale Proposer -->
+    <div id="modal-propose" class="modal hidden">
         <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <div class="lang-fr">
-                <p>Si vous cliquez sur « valider » la ressource ne sera plus visible et un message sera envoyé à l’administrateur pour vérifier le lien. <strong>Fonctionnalité non encore disponible.</strong></p>
-                <button class="btn-close-report">Fermer</button>
-            </div>
-            <div class="lang-en">
-                <p>If you click "Confirm," the resource will no longer be visible, and a message will be sent to the administrator to verify the link. <strong>Not available yet.</strong></p>
-                <button class="btn-close-report">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODALE PROPOSER UNE RESSOURCE -->
-    <div id="modal-add" class="modal hidden">
-        <div class="modal-content large-modal">
-            <span class="close-modal">&times;</span>
-            
+            <span class="close">&times;</span>
             <div class="tabs">
-                <button class="tab-btn active" data-target="tab-ia">Analyse IA par URL</button>
-                <button class="tab-btn" data-target="tab-manual">Ajout manuel</button>
+                <button id="tab-ia" class="active">Analyse IA par URL</button>
+                <button id="tab-manual">Ajout Manuel</button>
+            </div>
+            
+            <div id="form-ia-container">
+                <input type="text" id="ia-url" placeholder="Collez l'URL ici">
+                <button id="btn-analyze-ia" class="btn-primary">Analyser l'article</button>
+                <div id="ia-loading" class="hidden">Analyse par Gemini en cours... / Analysis by Gemini in progress...</div>
+                <div id="ia-error" class="error-msg hidden"></div>
             </div>
 
-            <!-- Alerte Erreur IA -->
-            <div id="ia-error-alert" class="alert-error hidden">
-                <span class="lang-fr">L'IA n'a détecté aucun lien évident entre cette ressource et les programmes de Sciences, Biologie ou STS. Ajout bloqué. Motif : <span id="ia-reason-fr"></span>. Si vous estimez que c’est une erreur, <a href="#" class="link-open-about">contactez-nous</a>.</span>
-                <span class="lang-en">The AI detected no obvious link between this resource and the Science, Biology or STS syllabi. Addition blocked. Reason: <span id="ia-reason-en"></span>. If you think this is an error, <a href="#" class="link-open-about">contact us</a>.</span>
-            </div>
-
-            <!-- ONGLET IA -->
-            <div id="tab-ia" class="tab-content active">
-                <div class="form-group">
-                    <label>URL de la ressource :</label>
-                    <input type="url" id="ia-url-input" placeholder="https://...">
-                    <button id="btn-analyze-ia" class="btn-primary">Analyser l'article</button>
-                    <span id="ia-loading-text" class="hidden">
-                        <span class="lang-fr">Analyse par Gemini en cours...</span>
-                        <span class="lang-en">Analysis by Gemini in progress...</span>
-                    </span>
+            <form id="resource-form" class="hidden">
+                <!-- Champs préremplis par IA ou manuels. Alignement bilingue via CSS grid -->
+                <div class="bilingual-grid">
+                    <input type="text" id="f-titre" placeholder="Titre" required>
+                    <input type="text" id="f-image" placeholder="URL Image (clic droit -> copier le lien de l'image)">
+                    <img id="img-preview" src="default-image.jpg" alt="Preview" onerror="this.src='default-image.jpg';">
                 </div>
-            </div>
-
-            <!-- ONGLET MANUEL (et Formulaire commun post-IA) -->
-            <div id="tab-manual" class="tab-content">
-                <form id="resource-form">
-                    
-                    <div class="form-group">
-                        <label>Lien (URL) :</label>
-                        <input type="url" id="form-url" required>
+                
+                <div class="bilingual-grid">
+                    <div>
+                        <select id="f-niveau" multiple required></select>
+                        <select id="f-theme"></select>
                     </div>
-
-                    <div class="form-group">
-                        <label class="lang-fr">Titre de la ressource :</label>
-                        <label class="lang-en">Resource Title :</label>
-                        <input type="text" id="form-title" required>
+                    <div>
+                        <select id="f-type" required></select>
+                        <select id="f-lang" required></select>
                     </div>
-
-                    <div class="form-group">
-                        <label>Image (URL) :</label>
-                        <div class="input-with-btn">
-                            <input type="url" id="form-image">
-                            <button type="button" id="btn-preview-image">Afficher l'image</button>
-                        </div>
-                        <small class="help-text lang-fr">Faire un clic droit sur l’image puis choisir « copiez le lien de l’image » et coller ce lien ici. Si vous n’ajoutez pas l’url, une image par défaut sera ajoutée.</small>
-                        <small class="help-text lang-en">Right-click on the image, select "copy image link" and paste it here. If you do not add the URL, a default image will be added.</small>
-                        <img id="image-preview" src="" alt="Aperçu" class="hidden" onerror="this.src='default-image.jpg';"> <!-- URL de fallback à définir dans le JS -->
-                    </div>
-
-                    <!-- Champs Bilingues alignés en deux colonnes (CSS grid) -->
-                    <div class="bilingual-grid">
-                        
-                        <!-- Niveaux et Thèmes -->
-                        <div class="form-group">
-                            <label class="lang-fr">Niveau :</label>
-                            <label class="lang-en">Level :</label>
-                            <div id="dynamic-levels-container">
-                                <select class="level-select"><option value="">Choisir / Choose...</option></select>
-                            </div>
-                            <button type="button" id="btn-add-level" class="btn-small">+ Ajouter un autre niveau/thème</button>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="lang-fr">Thème :</label>
-                            <label class="lang-en">Topic :</label>
-                            <div id="dynamic-themes-container">
-                                <select class="theme-select" disabled><option value="">Sélectionnez d'abord un niveau</option></select>
-                            </div>
-                        </div>
-
-                        <!-- Mots-clés -->
-                        <div class="form-group">
-                            <label class="lang-fr">Mots-clés (FR) :</label>
-                            <div id="keywords-fr-container" class="tags-input-container"></div>
-                            <input type="text" id="input-keyword-fr">
-                            <button type="button" id="btn-add-keyword-fr" class="btn-small">+</button>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="lang-en">Keywords (EN) :</label>
-                            <div id="keywords-en-container" class="tags-input-container"></div>
-                            <input type="text" id="input-keyword-en">
-                            <button type="button" id="btn-add-keyword-en" class="btn-small">+</button>
-                        </div>
-
-                        <!-- Type de document -->
-                        <div class="form-group">
-                            <label class="lang-fr">Type de document :</label>
-                            <label class="lang-en">Document type :</label>
-                            <select id="form-type">
-                                <option value="">Choisir / Choose...</option>
-                                <!-- Injecté par JS -->
-                                <option value="autre">Autre / Other</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Conteneur masqué pour nouveau type -->
-                        <div id="new-type-container" class="hidden form-group full-width">
-                            <input type="text" id="new-type-fr" placeholder="Nouveau type (FR)">
-                            <input type="text" id="new-type-en" placeholder="New type (EN) - L'IA traduira si vide">
-                        </div>
-
-                    </div> <!-- Fin bilingual grid -->
-
-                    <div class="form-group">
-                        <label class="lang-fr">Langue de la ressource :</label>
-                        <label class="lang-en">Resource language :</label>
-                        <input type="text" id="search-lang" placeholder="Chercher une langue..." class="lang-fr">
-                        <input type="text" id="search-lang-en" placeholder="Search language..." class="lang-en hidden">
-                        <select id="form-lang" required>
-                            <!-- Injecté par JS dans l'ordre alphabétique -->
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>NOM Prénom :</label>
-                        <input type="text" id="form-name" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="lang-fr">Établissement :</label>
-                        <label class="lang-en">School :</label>
-                        <input type="text" id="form-school" required>
-                    </div>
-
-                    <button type="submit" id="btn-submit-resource" class="btn-primary full-width">
-                        <span class="lang-fr">Soumettre la ressource</span>
-                        <span class="lang-en">Submit resource</span>
-                    </button>
-
-                </form>
-            </div>
+                </div>
+                
+                <button type="submit" id="btn-submit-resource" class="btn-primary">Soumettre</button>
+            </form>
         </div>
     </div>
 
-    <!-- Le script JS sera lié ici -->
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden"></div>
+
     <script src="app.js"></script>
 </body>
 </html>
