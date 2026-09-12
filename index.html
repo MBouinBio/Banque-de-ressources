@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veille Pédagogique Science & STS</title>
+    <!-- Le fichier CSS sera lié ici -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-lang="FR">
+
+    <!-- ========================================== -->
+    <!-- SPRITE SVG (Caché, pour héritage CSS)      -->
+    <!-- ========================================== -->
+    <svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
+        <!-- Remplacer ce commentaire par le contenu complet de l'Annexe 3 du cahier des charges -->
+        <symbol id="flask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/>
+            <path d="M6.453 15h11.094"/><path d="M8.5 2h7"/>
+        </symbol>
+        <!-- Inclus ici un seul symbole pour l'exemple, tu colleras l'Annexe 3 complète -->
+        <symbol id="default-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </symbol>
+    </svg>
+
+    <!-- ========================================== -->
+    <!-- EN-TÊTE (HEADER)                           -->
+    <!-- ========================================== -->
+    <header class="app-header">
+        <div class="header-title">
+            <h1 class="lang-fr">Veille scientifique pour le programme des écoles européennes</h1>
+            <h1 class="lang-en">Scientific watch for the European Schools syllabus</h1>
+        </div>
+        <div class="header-controls">
+            <button id="btn-open-add-modal" class="btn-primary">
+                <span class="lang-fr">Proposer une ressource</span>
+                <span class="lang-en">Submit a resource</span>
+            </button>
+            <a href="#" id="link-about">
+                <span class="lang-fr">À propos</span>
+                <span class="lang-en">About</span>
+            </a>
+            <!-- Toggle Switch pour la langue -->
+            <div class="lang-switch-container">
+                <span>FR</span>
+                <label class="switch">
+                    <input type="checkbox" id="lang-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span>EN</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================== -->
+    <!-- CONTENU PRINCIPAL                          -->
+    <!-- ========================================== -->
+    <main class="app-layout">
+        
+        <!-- BARRE LATÉRALE : FILTRES -->
+        <aside class="sidebar-filters">
+            <h2 class="lang-fr">Filtres</h2>
+            <h2 class="lang-en">Filters</h2>
+            
+            <div class="filter-group">
+                <input type="text" id="search-input" placeholder="Recherche libre..." class="lang-fr">
+                <input type="text" id="search-input-en" placeholder="Free search..." class="lang-en">
+            </div>
+
+            <div class="filter-group">
+                <label class="lang-fr">Niveau</label>
+                <label class="lang-en">Level</label>
+                <select id="filter-niveau"><option value="">Tous / All</option></select>
+            </div>
+
+            <div class="filter-group">
+                <label class="lang-fr">Thème</label>
+                <label class="lang-en">Topic</label>
+                <div id="filter-themes-container" class="tags-container">
+                    <!-- Généré dynamiquement par JS -->
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label class="lang-fr">Type de contenu</label>
+                <label class="lang-en">Content type</label>
+                <select id="filter-type"><option value="">Tous / All</option></select>
+            </div>
+
+            <div class="filter-group">
+                <label class="lang-fr">Langue</label>
+                <label class="lang-en">Language</label>
+                <div id="filter-langues-container" class="checkbox-group">
+                    <!-- Généré dynamiquement par JS pour sélection multiple -->
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label class="lang-fr">Proposé par</label>
+                <label class="lang-en">Submitted by</label>
+                <select id="filter-contributor"><option value="">Tous / All</option></select>
+            </div>
+
+            <div class="filter-group">
+                <label class="lang-fr">Établissement</label>
+                <label class="lang-en">School</label>
+                <select id="filter-school"><option value="">Tous / All</option></select>
+            </div>
+        </aside>
+
+        <!-- GRILLE D'AFFICHAGE -->
+        <section class="main-content">
+            <div id="resources-grid" class="cards-grid">
+                <!-- Les cartes seront injectées ici par JS -->
+            </div>
+            
+            <div class="load-more-container">
+                <button id="btn-load-more" class="btn-secondary" style="display: none;">
+                    <span class="lang-fr">Afficher plus</span>
+                    <span class="lang-en">Show more</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- MODALES ET TOASTS                          -->
+    <!-- ========================================== -->
+
+    <!-- TOAST DE NOTIFICATION -->
+    <div id="toast-notification" class="toast hidden">
+        <span class="lang-fr">Ressource soumise avec succès, en attente de modération</span>
+        <span class="lang-en">Resource successfully submitted, pending moderation</span>
+    </div>
+
+    <!-- MODALE "À PROPOS" -->
+    <div id="modal-about" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="lang-fr">
+                <h2>À propos du projet</h2>
+                <p>Cette application de veille pédagogique est destinée aux enseignants de Sciences Intégrées, de Biologie et de STS des Écoles Européennes. Elle permet de mutualiser, catégoriser et rechercher des ressources multilingues adaptées à nos programmes.</p>
+                <p>L’analyse et le pré-tri des ressources sont assistés par une intelligence artificielle (Gemini).</p>
+                <p>Les contenus partagés demeurent la propriété de leurs auteurs respectifs et n'engagent pas la responsabilité de la plateforme ni des Écoles Européennes. Chaque ajout est modéré par des enseignants.</p>
+                <p>Si une ressource vous semble inappropriée, merci de le signaler. Pour toute question, <a href="mailto:marine.bouin@teacher.eursc.eu">contactez Marine Bouin</a> via les outils Microsoft 365 de l'école.</p>
+            </div>
+            <div class="lang-en">
+                <h2>About the Project</h2>
+                <p>This educational watch application is designed for Integrated Science, Biology, and STS teachers in the European Schools. It allows users to share, categorize, and search for multilingual resources aligned with our syllabi.</p>
+                <p>The analysis and initial sorting of resources are assisted by Artificial Intelligence (Gemini).</p>
+                <p>Shared contents remain the property of their respective authors and do not reflect the views of the platform or the European Schools. Every submission is moderated by teachers.</p>
+                <p>If you find a resource inappropriate, please report it. For any inquiries, <a href="mailto:marine.bouin@teacher.eursc.eu">contact Marine Bouin</a> via the school's Microsoft 365 tools.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE SIGNALEMENT LIEN MORT -->
+    <div id="modal-report" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="lang-fr">
+                <p>Si vous cliquez sur « valider » la ressource ne sera plus visible et un message sera envoyé à l’administrateur pour vérifier le lien. <strong>Fonctionnalité non encore disponible.</strong></p>
+                <button class="btn-close-report">Fermer</button>
+            </div>
+            <div class="lang-en">
+                <p>If you click "Confirm," the resource will no longer be visible, and a message will be sent to the administrator to verify the link. <strong>Not available yet.</strong></p>
+                <button class="btn-close-report">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE PROPOSER UNE RESSOURCE -->
+    <div id="modal-add" class="modal hidden">
+        <div class="modal-content large-modal">
+            <span class="close-modal">&times;</span>
+            
+            <div class="tabs">
+                <button class="tab-btn active" data-target="tab-ia">Analyse IA par URL</button>
+                <button class="tab-btn" data-target="tab-manual">Ajout manuel</button>
+            </div>
+
+            <!-- Alerte Erreur IA -->
+            <div id="ia-error-alert" class="alert-error hidden">
+                <span class="lang-fr">L'IA n'a détecté aucun lien évident entre cette ressource et les programmes de Sciences, Biologie ou STS. Ajout bloqué. Motif : <span id="ia-reason-fr"></span>. Si vous estimez que c’est une erreur, <a href="#" class="link-open-about">contactez-nous</a>.</span>
+                <span class="lang-en">The AI detected no obvious link between this resource and the Science, Biology or STS syllabi. Addition blocked. Reason: <span id="ia-reason-en"></span>. If you think this is an error, <a href="#" class="link-open-about">contact us</a>.</span>
+            </div>
+
+            <!-- ONGLET IA -->
+            <div id="tab-ia" class="tab-content active">
+                <div class="form-group">
+                    <label>URL de la ressource :</label>
+                    <input type="url" id="ia-url-input" placeholder="https://...">
+                    <button id="btn-analyze-ia" class="btn-primary">Analyser l'article</button>
+                    <span id="ia-loading-text" class="hidden">
+                        <span class="lang-fr">Analyse par Gemini en cours...</span>
+                        <span class="lang-en">Analysis by Gemini in progress...</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- ONGLET MANUEL (et Formulaire commun post-IA) -->
+            <div id="tab-manual" class="tab-content">
+                <form id="resource-form">
+                    
+                    <div class="form-group">
+                        <label>Lien (URL) :</label>
+                        <input type="url" id="form-url" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="lang-fr">Titre de la ressource :</label>
+                        <label class="lang-en">Resource Title :</label>
+                        <input type="text" id="form-title" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Image (URL) :</label>
+                        <div class="input-with-btn">
+                            <input type="url" id="form-image">
+                            <button type="button" id="btn-preview-image">Afficher l'image</button>
+                        </div>
+                        <small class="help-text lang-fr">Faire un clic droit sur l’image puis choisir « copiez le lien de l’image » et coller ce lien ici. Si vous n’ajoutez pas l’url, une image par défaut sera ajoutée.</small>
+                        <small class="help-text lang-en">Right-click on the image, select "copy image link" and paste it here. If you do not add the URL, a default image will be added.</small>
+                        <img id="image-preview" src="" alt="Aperçu" class="hidden" onerror="this.src='default-image-url.jpg';"> <!-- URL de fallback à définir dans le JS -->
+                    </div>
+
+                    <!-- Champs Bilingues alignés en deux colonnes (CSS grid) -->
+                    <div class="bilingual-grid">
+                        
+                        <!-- Niveaux et Thèmes -->
+                        <div class="form-group">
+                            <label class="lang-fr">Niveau :</label>
+                            <label class="lang-en">Level :</label>
+                            <div id="dynamic-levels-container">
+                                <select class="level-select"><option value="">Choisir / Choose...</option></select>
+                            </div>
+                            <button type="button" id="btn-add-level" class="btn-small">+ Ajouter un autre niveau/thème</button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="lang-fr">Thème :</label>
+                            <label class="lang-en">Topic :</label>
+                            <div id="dynamic-themes-container">
+                                <select class="theme-select" disabled><option value="">Sélectionnez d'abord un niveau</option></select>
+                            </div>
+                        </div>
+
+                        <!-- Mots-clés -->
+                        <div class="form-group">
+                            <label class="lang-fr">Mots-clés (FR) :</label>
+                            <div id="keywords-fr-container" class="tags-input-container"></div>
+                            <input type="text" id="input-keyword-fr">
+                            <button type="button" id="btn-add-keyword-fr" class="btn-small">+</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="lang-en">Keywords (EN) :</label>
+                            <div id="keywords-en-container" class="tags-input-container"></div>
+                            <input type="text" id="input-keyword-en">
+                            <button type="button" id="btn-add-keyword-en" class="btn-small">+</button>
+                        </div>
+
+                        <!-- Type de document -->
+                        <div class="form-group">
+                            <label class="lang-fr">Type de document :</label>
+                            <label class="lang-en">Document type :</label>
+                            <select id="form-type">
+                                <option value="">Choisir / Choose...</option>
+                                <!-- Injecté par JS -->
+                                <option value="autre">Autre / Other</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Conteneur masqué pour nouveau type -->
+                        <div id="new-type-container" class="hidden form-group full-width">
+                            <input type="text" id="new-type-fr" placeholder="Nouveau type (FR)">
+                            <input type="text" id="new-type-en" placeholder="New type (EN) - L'IA traduira si vide">
+                        </div>
+
+                    </div> <!-- Fin bilingual grid -->
+
+                    <div class="form-group">
+                        <label class="lang-fr">Langue de la ressource :</label>
+                        <label class="lang-en">Resource language :</label>
+                        <input type="text" id="search-lang" placeholder="Chercher une langue..." class="lang-fr">
+                        <input type="text" id="search-lang-en" placeholder="Search language..." class="lang-en hidden">
+                        <select id="form-lang" required>
+                            <!-- Injecté par JS dans l'ordre alphabétique -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>NOM Prénom :</label>
+                        <input type="text" id="form-name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="lang-fr">Établissement :</label>
+                        <label class="lang-en">School :</label>
+                        <input type="text" id="form-school" required>
+                    </div>
+
+                    <button type="submit" id="btn-submit-resource" class="btn-primary full-width">
+                        <span class="lang-fr">Soumettre la ressource</span>
+                        <span class="lang-en">Submit resource</span>
+                    </button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Le script JS sera lié ici -->
+    <script src="app.js"></script>
+</body>
+</html>
