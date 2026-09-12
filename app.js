@@ -194,7 +194,7 @@ function createCardHTML(item) {
     card.className = 'card';
     
     // Sécurisation des images avec fallback
-    const imgUrl = item.image ? item.image : 'default-image-url.jpg'; 
+    const imgUrl = item.image ? item.image : 'default-image.jpg'; 
     
     // Génération des badges de thèmes
     const themesFR = item.theme ? item.theme.split(',').map(t => t.trim()) : [];
