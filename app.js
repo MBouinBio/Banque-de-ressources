@@ -351,7 +351,7 @@ function initFormInteractions() {
     // 4. Gestion des mots clés (Suppression croisée par index)
     setupKeywordsLogic();
 
-    // 5. Soumission du formulaire (Optimisme UI / No-Cors)
+    // 5. Soumission du formulaire (Optimisme UI / )
     document.getElementById('resource-form').addEventListener('submit', handleFormSubmit);
 }
 
