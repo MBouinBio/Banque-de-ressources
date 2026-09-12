@@ -5,7 +5,7 @@
  */
 const CONFIG = {
     // Remplacer par l'URL de l'exécutable Web de ton Google Apps Script
-    GAS_URL: "https://script.google.com/macros/s/AKfycbxc-27rxdY0uz0og3X8HrF70u4xup_9mSjTDmtniiIcx2nDp1tdOShVVqBgcKtdRWY/exec",
+    GAS_URL: "https://script.google.com/macros/s/AKfycbx_06ZxdUanydJOp_HcdcMR7yvCQB_PSewpZpCoKCxKW0d3ojk3-f-hr1h3cMtIwZ2f/exec",
     TOKEN: "123veille456STS", // Doit correspondre au token du Code.gs
     ITEMS_PER_PAGE: 12
 };
