@@ -214,7 +214,7 @@ function createCardHTML(item) {
     const typeToUse = AppState.lang === 'FR' ? item.type_fr : item.type_en;
 
     card.innerHTML = `
-        <img src="${imgUrl}" alt="${item.titre}" class="card-img" onerror="this.src='default-image-url.jpg';">
+        <img src="${imgUrl}" alt="${item.titre}" class="card-img" onerror="this.src='default-image.jpg';">
         <div class="card-content">
             <div class="badges-container">
                 ${badgesHTML}
