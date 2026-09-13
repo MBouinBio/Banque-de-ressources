@@ -1,17 +1,18 @@
 /**
- * app.js — squelette d'interactivité
+ * app.js
  *
- * À ce stade, ce fichier gère UNIQUEMENT :
+ * Gère actuellement :
  *   1. Le switch de langue FR/EN (texte de l'interface + persistance URL ?lang=)
  *   2. L'ouverture/fermeture des modales (À propos, Signaler, Proposer une ressource)
  *   3. L'empilement de la sidebar sur mobile
  *   4. Les onglets de la modale "Proposer une ressource"
+ *   5. Le chargement des données réelles (action=getData) et l'affichage
+ *      des cartes-ressources, paginé 12 par 12 ("Afficher plus")
  *
  * NE FAIT PAS ENCORE (prochaines étapes) :
- *   - la génération dynamique des filtres depuis le Google Sheet
- *   - le filtrage réel des cartes
- *   - les appels au backend Code.gs (lecture IA, écriture de ressource)
+ *   - la génération dynamique des 8 filtres et le filtrage réel des cartes
  *   - la persistance des filtres dans l'URL (seul ?lang= est géré ici)
+ *   - la modale d'ajout (IA + manuel) connectée au backend
  */
 
 (function () {
@@ -147,4 +148,227 @@
       });
     });
   });
+  /* =======================================================
+     5. CHARGEMENT DES DONNÉES (backend Code.gs, action=getData)
+     ======================================================= */
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxD8Hf1muql7BF0qiDMlpfV038afKdIco3dIsVNwGLgyg8Ct-DoEM4fhK1ItlDg30zd/exec";
+  const TAILLE_PAGE = 12; // Affichage 12 par 12, exigé par le CDC
+
+  // Données brutes reçues une seule fois au chargement, jamais re-fetchées
+  // lors du filtrage (qui doit rester exclusivement local, cf. CDC).
+  let toutesLesRessources = [];
+  let referentielStructure = [];
+  let referentielTypes = [];
+  let referentielLangues = [];
+
+  // Pour l'instant (avant le bloc filtres), la liste affichée = liste complète.
+  let ressourcesAffichees = [];
+  let nombreCartesVisibles = 0;
+
+  const grille = document.getElementById("card-grid");
+  const compteurResultats = document.getElementById("result-count-number");
+  const boutonAfficherPlus = document.getElementById("btn-load-more");
+
+  function chargerDonnees() {
+    fetch(APPS_SCRIPT_URL + "?action=getData")
+      .then(function (reponse) { return reponse.json(); })
+      .then(function (donnees) {
+        if (donnees.erreur) throw new Error(donnees.erreur);
+
+        toutesLesRessources = donnees.ressources || [];
+        referentielStructure = donnees.structure || [];
+        referentielTypes = donnees.types || [];
+        referentielLangues = donnees.langues || [];
+
+        ressourcesAffichees = toutesLesRessources; // sans filtre pour l'instant
+        nombreCartesVisibles = 0;
+        afficherLotSuivant();
+      })
+      .catch(function (erreur) {
+        grille.innerHTML =
+          '<p class="card-grid__etat">Impossible de charger les ressources (' + erreur.message + ').</p>';
+      });
+  }
+
+  /**
+   * Affiche le lot de cartes suivant (12 de plus), sans redessiner celles
+   * déjà affichées — évite un clignotement visuel au clic sur "Afficher plus".
+   */
+  function afficherLotSuivant() {
+    if (nombreCartesVisibles === 0) {
+      grille.innerHTML = ""; // on retire le message "Chargement…"
+    }
+
+    if (ressourcesAffichees.length === 0) {
+      grille.innerHTML = '<p class="card-grid__etat" data-fr="Aucune ressource ne correspond à ces critères." ' +
+        'data-en="No resource matches these criteria.">Aucune ressource ne correspond à ces critères.</p>';
+      boutonAfficherPlus.hidden = true;
+      compteurResultats.textContent = "0";
+      return;
+    }
+
+    const prochainLot = ressourcesAffichees.slice(nombreCartesVisibles, nombreCartesVisibles + TAILLE_PAGE);
+    prochainLot.forEach(function (ressource) {
+      grille.appendChild(construireCarteRessource_(ressource));
+    });
+
+    nombreCartesVisibles += prochainLot.length;
+    compteurResultats.textContent = String(ressourcesAffichees.length);
+    boutonAfficherPlus.hidden = nombreCartesVisibles >= ressourcesAffichees.length;
+
+    // Applique immédiatement la langue courante aux nouvelles cartes
+    // (titres/labels bilingues des nouveaux éléments injectés).
+    appliquerLangueSurElement_(grille);
+  }
+
+  boutonAfficherPlus.addEventListener("click", afficherLotSuivant);
+
+  /**
+   * Découpe une valeur "colonne multi-valeurs" (séparée par des virgules
+   * dans le Google Sheet) en tableau de chaînes propres.
+   */
+  function decouperListe_(valeur) {
+    return String(valeur || "")
+      .split(",")
+      .map(function (item) { return item.trim(); })
+      .filter(Boolean);
+  }
+
+  /**
+   * Détermine la classe CSS de couleur (Annexe 2) à partir d'un intitulé
+   * de niveau tel que "S3 SCI", "S6 bio 4", "S7 bio 4" ou "STS".
+   */
+  function classeNiveau_(niveau) {
+    const texte = String(niveau || "").trim().toLowerCase();
+    if (texte === "sts") return "bg-niveau-sts";
+    const correspondance = texte.match(/^s([1-7])\b/);
+    return correspondance ? "bg-niveau-s" + correspondance[1] : "bg-niveau-all";
+  }
+
+  /**
+   * Retrouve la ligne du référentiel "structure" correspondant à un thème
+   * donné. Les noms de thème sont uniques dans tout le référentiel (confirmé
+   * par l'utilisatrice) : une simple correspondance par nom suffit, pas besoin
+   * de croiser avec le niveau de la ressource.
+   */
+  function trouverLigneStructure_(theme) {
+    const themeCible = theme.trim().toLowerCase();
+    return referentielStructure.find(function (ligne) {
+      return String(ligne.theme).trim().toLowerCase() === themeCible;
+    });
+  }
+
+  /**
+   * Construit l'élément DOM d'une carte-ressource à partir d'une ligne
+   * de données brute renvoyée par le backend.
+   */
+  function construireCarteRessource_(ressource) {
+    const themes = decouperListe_(ressource.theme);
+
+    const carte = document.createElement("article");
+    carte.className = "card";
+
+    // --- Image (avec repli automatique sur l'image par défaut) ---
+    const imageWrap = document.createElement("div");
+    imageWrap.className = "card__image-wrap";
+    const image = document.createElement("img");
+    image.className = "card__image";
+    image.loading = "lazy";
+    image.alt = "";
+    image.src = ressource.image || "default-image.jpg";
+    image.onerror = function () {
+      image.onerror = null;
+      image.src = "default-image.jpg";
+    };
+    imageWrap.appendChild(image);
+    carte.appendChild(imageWrap);
+
+    // --- Corps de la carte ---
+    const corps = document.createElement("div");
+    corps.className = "card__body";
+
+    const titre = document.createElement("h2");
+    titre.className = "card__title";
+    titre.textContent = ressource.titre || "";
+    corps.appendChild(titre);
+
+    // --- Badges ---
+    const badges = document.createElement("div");
+    badges.className = "card__badges";
+
+    // Badge 1 : un par thème, icône seule, couleur = niveau associé (CDC)
+    themes.forEach(function (theme) {
+      const ligneStructure = trouverLigneStructure_(theme);
+      const icone = ligneStructure ? ligneStructure.icone : "default-icon";
+      const classeCouleur = ligneStructure ? classeNiveau_(ligneStructure.niveau) : "bg-niveau-all";
+
+      const badge = document.createElement("span");
+      badge.className = "badge badge--niveau " + classeCouleur;
+      badge.title = theme;
+      badge.innerHTML = '<svg class="badge-icone" width="16" height="16" aria-hidden="true">' +
+        '<use href="#' + icone + '"></use></svg>';
+      badges.appendChild(badge);
+    });
+
+    // Badge 2 : type de document (texte selon la langue active)
+    if (ressource.type_fr || ressource.type_en) {
+      const badgeType = document.createElement("span");
+      badgeType.className = "badge badge--type";
+      badgeType.setAttribute("data-fr", ressource.type_fr || "");
+      badgeType.setAttribute("data-en", ressource.type_en || "");
+      badgeType.textContent = htmlEl.getAttribute("data-lang") === "EN" ? ressource.type_en : ressource.type_fr;
+      badges.appendChild(badgeType);
+    }
+
+    // Badge 3 : langue (abréviation brute, ex: FR, EN, NL)
+    if (ressource.langue) {
+      const badgeLangue = document.createElement("span");
+      badgeLangue.className = "badge badge--langue";
+      badgeLangue.textContent = ressource.langue;
+      badges.appendChild(badgeLangue);
+    }
+
+    corps.appendChild(badges);
+
+    // --- Métadonnées (proposé par — établissement) ---
+    const meta = document.createElement("p");
+    meta.className = "card__meta";
+    meta.textContent = [ressource.propose_par, ressource.etablissement].filter(Boolean).join(" — ");
+    corps.appendChild(meta);
+
+    // --- Bouton "Signaler un problème" (délégation déjà branchée au §2) ---
+    const boutonSignaler = document.createElement("button");
+    boutonSignaler.type = "button";
+    boutonSignaler.className = "card__report-btn btn-open-report";
+    boutonSignaler.setAttribute("data-fr", "Signaler un problème");
+    boutonSignaler.setAttribute("data-en", "Report a problem");
+    boutonSignaler.textContent = htmlEl.getAttribute("data-lang") === "EN" ? "Report a problem" : "Signaler un problème";
+    corps.appendChild(boutonSignaler);
+
+    // Lien cliquable vers la ressource elle-même (sur l'image et le titre)
+    if (ressource.url) {
+      imageWrap.style.cursor = "pointer";
+      titre.style.cursor = "pointer";
+      const ouvrirRessource = function () { window.open(ressource.url, "_blank", "noopener"); };
+      imageWrap.addEventListener("click", ouvrirRessource);
+      titre.addEventListener("click", ouvrirRessource);
+    }
+
+    carte.appendChild(corps);
+    return carte;
+  }
+
+  /**
+   * Ré-applique la traduction FR/EN sur un sous-arbre du DOM (utilisé après
+   * l'injection de nouvelles cartes, qui portent aussi des attributs
+   * data-fr/data-en pour le badge type et le bouton signaler).
+   */
+  function appliquerLangueSurElement_(racine) {
+    const lang = htmlEl.getAttribute("data-lang") === "EN" ? "EN" : "FR";
+    racine.querySelectorAll("[data-fr][data-en]").forEach(function (el) {
+      el.textContent = lang === "EN" ? el.dataset.en : el.dataset.fr;
+    });
+  }
+
+  chargerDonnees();
 })();
