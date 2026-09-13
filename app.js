@@ -309,7 +309,7 @@
 
       const badge = document.createElement("span");
       badge.className = "badge badge--niveau " + classeCouleur;
-      badge.title = theme;
+      badge.title = ligneStructure ? (ligneStructure.niveau + " - " + theme) : theme;
       badge.innerHTML = '<svg class="badge-icone" width="16" height="16" aria-hidden="true">' +
         '<use href="#' + icone + '"></use></svg>';
       badges.appendChild(badge);
