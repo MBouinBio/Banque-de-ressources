@@ -1,168 +1,150 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbx_06ZxdUanydJOp_HcdcMR7yvCQB_PSewpZpCoKCxKW0d3ojk3-f-hr1h3cMtIwZ2f/exec"; 
-let allResources = [];
-let currentIndex = 0;
-const ITEMS_PER_PAGE = 12;
-let isEnglish = false;
+/**
+ * app.js — squelette d'interactivité
+ *
+ * À ce stade, ce fichier gère UNIQUEMENT :
+ *   1. Le switch de langue FR/EN (texte de l'interface + persistance URL ?lang=)
+ *   2. L'ouverture/fermeture des modales (À propos, Signaler, Proposer une ressource)
+ *   3. L'empilement de la sidebar sur mobile
+ *   4. Les onglets de la modale "Proposer une ressource"
+ *
+ * NE FAIT PAS ENCORE (prochaines étapes) :
+ *   - la génération dynamique des filtres depuis le Google Sheet
+ *   - le filtrage réel des cartes
+ *   - les appels au backend Code.gs (lecture IA, écriture de ressource)
+ *   - la persistance des filtres dans l'URL (seul ?lang= est géré ici)
+ */
 
-// 1. Initialisation et synchronisation URL
-document.addEventListener("DOMContentLoaded", async () => {
-    initLangToggle();
-    await fetchResources();
-    parseUrlParams();
-    renderGrid();
-    setupFilters();
-    setupModals();
-});
+(function () {
+  "use strict";
 
-function initLangToggle() {
-    const toggle = document.getElementById('lang-toggle');
-    toggle.addEventListener('change', (e) => {
-        isEnglish = e.target.checked;
-        document.querySelectorAll('.fr-text').forEach(el => el.classList.toggle('hidden', isEnglish));
-        document.querySelectorAll('.en-text').forEach(el => el.classList.toggle('hidden', !isEnglish));
-        updateUrlParam('lang', isEnglish ? 'EN' : 'FR');
-        renderGrid(true);
+  /* =======================================================
+     1. GESTION DE LA LANGUE (FR / EN)
+     ======================================================= */
+  const langToggle = document.getElementById("lang-toggle");
+  const htmlEl = document.documentElement;
+
+  function applyLang(lang) {
+    htmlEl.setAttribute("data-lang", lang);
+    htmlEl.setAttribute("lang", lang === "EN" ? "en" : "fr");
+    langToggle.setAttribute("aria-checked", lang === "EN" ? "true" : "false");
+
+    // Textes simples portés par data-fr / data-en
+    document.querySelectorAll("[data-fr][data-en]").forEach((el) => {
+      el.textContent = lang === "EN" ? el.dataset.en : el.dataset.fr;
     });
-}
 
-async function fetchResources() {
-    try {
-        const response = await fetch(`${GAS_URL}?action=getData`);
-        const data = await response.json();
-        allResources = data.ressources; // On suppose que GAS renvoie un JSON {ressources: [...]}
-        populateFilters(data);
-        document.getElementById('loading-indicator').classList.add('hidden');
-    } catch (error) {
-        console.error("Erreur de chargement", error);
-        document.getElementById('loading-indicator').innerText = "Erreur de connexion au serveur.";
-    }
-}
+    // Placeholders portés par data-fr-placeholder / data-en-placeholder
+    document.querySelectorAll("[data-fr-placeholder][data-en-placeholder]").forEach((el) => {
+      el.setAttribute(
+        "placeholder",
+        lang === "EN" ? el.dataset.enPlaceholder : el.dataset.frPlaceholder
+      );
+    });
 
-// 2. Gestion des paramètres d'URL (replaceState)
-function parseUrlParams() {
+    // Blocs entiers bilingues (ex : modale "À propos")
+    document.querySelectorAll("[data-lang-block]").forEach((el) => {
+      el.hidden = el.getAttribute("data-lang-block") !== lang;
+    });
+
+    // Persistance dans l'URL (history.replaceState, comme exigé par le CDC)
     const params = new URLSearchParams(window.location.search);
-    if(params.get('lang') === 'EN') {
-        document.getElementById('lang-toggle').checked = true;
-        isEnglish = true;
+    params.set("lang", lang);
+    history.replaceState(null, "", "?" + params.toString());
+  }
+
+  langToggle.addEventListener("click", () => {
+    const current = htmlEl.getAttribute("data-lang") === "EN" ? "EN" : "FR";
+    applyLang(current === "EN" ? "FR" : "EN");
+  });
+
+  // Lecture initiale de l'URL au chargement (?lang=EN)
+  const initialParams = new URLSearchParams(window.location.search);
+  const initialLang = initialParams.get("lang") === "EN" ? "EN" : "FR";
+  applyLang(initialLang);
+
+  /* =======================================================
+     2. GESTION DES MODALES
+     ======================================================= */
+  function openModal(modalEl) {
+    modalEl.hidden = false;
+  }
+  function closeModal(modalEl) {
+    modalEl.hidden = true;
+  }
+
+  const modalAbout = document.getElementById("modal-about");
+  const modalReport = document.getElementById("modal-report");
+  const modalAddResource = document.getElementById("modal-add-resource");
+
+  document.getElementById("btn-open-about").addEventListener("click", () => openModal(modalAbout));
+  document.getElementById("btn-open-add-resource").addEventListener("click", () => openModal(modalAddResource));
+
+  // Un bouton "Signaler un problème" par carte (démo actuelle + cartes futures)
+  document.addEventListener("click", (event) => {
+    if (event.target.closest(".btn-open-report")) {
+      openModal(modalReport);
     }
-    ['niveau', 'theme', 'type', 'langue'].forEach(filter => {
-        if(params.has(filter)) document.getElementById(`filter-${filter}`).value = params.get(filter);
+  });
+
+  // Fermeture : bouton dédié, clic sur l'overlay, ou touche Échap
+  document.querySelectorAll("[data-close-modal]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      closeModal(btn.closest(".modal-overlay"));
     });
-}
+  });
 
-function updateUrlParam(key, value) {
-    const url = new URL(window.location);
-    if (value) url.searchParams.set(key, value);
-    else url.searchParams.delete(key);
-    window.history.replaceState({}, '', url);
-}
-
-function setupFilters() {
-    const filters = document.querySelectorAll('.sidebar select, .sidebar input');
-    filters.forEach(f => f.addEventListener('input', () => {
-        updateUrlParam(f.id.replace('filter-', ''), f.value);
-        renderGrid(true);
-    }));
-}
-
-// 3. Affichage et filtrage 12 par 12
-function renderGrid(reset = false) {
-    if (reset) { currentIndex = 0; document.getElementById('resources-grid').innerHTML = ''; }
-    
-    let filtered = allResources.filter(res => {
-        // Logique de filtrage front-end
-        const search = document.getElementById('search-input').value.toLowerCase();
-        const niveau = document.getElementById('filter-niveau').value;
-        const theme = document.getElementById('filter-theme').value;
-        
-        const matchSearch = res.titre.toLowerCase().includes(search) || res.mots_cles.toLowerCase().includes(search);
-        const matchNiveau = !niveau || res.niveau.includes(niveau);
-        const matchTheme = !theme || res.theme.includes(theme);
-        
-        return matchSearch && matchNiveau && matchTheme;
+  document.querySelectorAll(".modal-overlay").forEach((overlay) => {
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) closeModal(overlay);
     });
+  });
 
-    const fragment = document.createDocumentFragment();
-    const toShow = filtered.slice(currentIndex, currentIndex + ITEMS_PER_PAGE);
-    
-    toShow.forEach(res => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        // Fallback image direct dans le HTML généré via onerror
-        card.innerHTML = `
-            <a href="${res.url}" target="_blank">
-                <img src="${res.image || 'default-image.jpg'}" alt="${res.titre}" onerror="this.onerror=null;this.src='default-image.jpg';">
-                <div class="card-content">
-                    <h3>${res.titre}</h3>
-                    <div class="badges-container">
-                        ${generateBadges(res)}
-                    </div>
-                </div>
-            </a>
-        `;
-        fragment.appendChild(card);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      document.querySelectorAll(".modal-overlay:not([hidden])").forEach(closeModal);
+    }
+  });
+
+  /* =======================================================
+     3. SIDEBAR MOBILE (empilement < 768px)
+     ======================================================= */
+  const sidebarToggle = document.getElementById("sidebar-mobile-toggle");
+  const sidebarContent = document.getElementById("sidebar-content");
+
+  sidebarToggle.addEventListener("click", () => {
+    const isCollapsed = sidebarContent.getAttribute("data-collapsed") === "true";
+    sidebarContent.setAttribute("data-collapsed", isCollapsed ? "false" : "true");
+    sidebarToggle.setAttribute("aria-expanded", isCollapsed ? "true" : "false");
+  });
+
+  // Sur mobile, la sidebar démarre repliée ; sur desktop, toujours visible.
+  function initSidebarState() {
+    if (window.innerWidth < 768) {
+      sidebarContent.setAttribute("data-collapsed", "true");
+    } else {
+      sidebarContent.removeAttribute("data-collapsed");
+    }
+  }
+  initSidebarState();
+  window.addEventListener("resize", initSidebarState);
+
+  /* =======================================================
+     4. ONGLETS DE LA MODALE "PROPOSER UNE RESSOURCE"
+     ======================================================= */
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      tabs.forEach((t) => {
+        t.classList.remove("tab--active");
+        t.setAttribute("aria-selected", "false");
+      });
+      tab.classList.add("tab--active");
+      tab.setAttribute("aria-selected", "true");
+
+      const targetName = tab.dataset.tab;
+      document.querySelectorAll("[data-tab-panel]").forEach((panel) => {
+        panel.hidden = panel.getAttribute("data-tab-panel") !== targetName;
+      });
     });
-
-    document.getElementById('resources-grid').appendChild(fragment);
-    currentIndex += ITEMS_PER_PAGE;
-    
-    const btnMore = document.getElementById('btn-load-more');
-    if(currentIndex >= filtered.length) btnMore.classList.add('hidden');
-    else { btnMore.classList.remove('hidden'); btnMore.onclick = () => renderGrid(false); }
-}
-
-function generateBadges(res) {
-    // Génère les badges de thèmes, types et langues. Requiert la donnée correspondante du backend.
-    let badgesHtml = '';
-    const themes = res.theme.split(',');
-    themes.forEach(t => {
-        badgesHtml += `<span class="badge bg-niveau-${res.niveau_principal.toLowerCase().replace(' ', '')}">
-            <svg><use href="#${res.icone_theme || 'default-icon'}"></use></svg>
-            ${isEnglish ? res.topic : t.trim()}
-        </span>`;
-    });
-    badgesHtml += `<span class="badge bg-type">${isEnglish ? res.type_en : res.type_fr}</span>`;
-    badgesHtml += `<span class="badge">${res.langue}</span>`;
-    return badgesHtml;
-}
-
-// 4. Modales & Optimisme UI (POST No-cors)
-function setupModals() {
-    // Code basique d'ouverture/fermeture...
-    const btnSubmit = document.getElementById('btn-submit-resource');
-    btnSubmit.addEventListener('click', (e) => {
-        e.preventDefault();
-        btnSubmit.disabled = true;
-        btnSubmit.innerText = isEnglish ? "Submitting..." : "Envoi en cours...";
-        
-        const payload = {
-            action: "addResource",
-            titre: document.getElementById('f-titre').value,
-            // ... autres champs
-        };
-
-        // POST NO-CORS asymétrique
-        fetch(GAS_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' }, // Exigence du CDC
-            body: JSON.stringify(payload)
-        }).then(() => {
-            // Optimisme UI (1.5s delay simulé demandé dans le cahier des charges)
-            setTimeout(() => {
-                document.getElementById('modal-propose').classList.add('hidden');
-                btnSubmit.disabled = false;
-                btnSubmit.innerText = "Soumettre";
-                showToast(isEnglish ? "Resource successfully submitted, pending moderation" : "Ressource soumise avec succès, en attente de modération");
-                document.getElementById('resource-form').reset();
-            }, 1500);
-        }).catch(err => console.error(err));
-    });
-}
-
-function showToast(msg) {
-    const toast = document.getElementById('toast');
-    toast.innerText = msg;
-    toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 4000);
-}
+  });
+})();
