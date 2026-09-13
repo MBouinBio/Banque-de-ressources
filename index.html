@@ -405,35 +405,10 @@
     </p>
 
     <div class="card-grid" id="card-grid">
-      <!-- ============================================= -->
-      <!-- Carte de démonstration (données statiques)      -->
-      <!-- La génération réelle se fera en JS à partir     -->
-      <!-- des données du Google Sheet (étape suivante).   -->
-      <!-- ============================================= -->
-      <article class="card" data-demo="true">
-        <div class="card__image-wrap">
-          <img class="card__image" src="default-image.jpg" alt=""
-               onerror="this.onerror=null;this.src='default-image.jpg';">
-        </div>
-        <div class="card__body">
-          <h2 class="card__title">Comprendre la photosynthèse en 5 minutes</h2>
-
-          <div class="card__badges">
-            <span class="badge badge--niveau bg-niveau-s4" title="Biologie">
-              <svg class="badge-icone" width="16" height="16" aria-hidden="true"><use href="#cell"></use></svg>
-            </span>
-            <span class="badge badge--type" data-fr="Vidéo" data-en="Video">Vidéo</span>
-            <span class="badge badge--langue">FR</span>
-          </div>
-
-          <p class="card__meta">Marine Bouin — Lycée Européen</p>
-
-          <button type="button" class="card__report-btn btn-open-report"
-                  data-fr="Signaler un problème" data-en="Report a problem">
-            Signaler un problème
-          </button>
-        </div>
-      </article>
+      <p class="card-grid__etat" id="card-grid-etat"
+         data-fr="Chargement des ressources…" data-en="Loading resources…">
+        Chargement des ressources…
+      </p>
     </div>
 
     <button type="button" class="btn btn--secondary btn--load-more" id="btn-load-more"
