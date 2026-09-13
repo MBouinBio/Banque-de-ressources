@@ -299,6 +299,11 @@
     // Badge 1 : un par thème, icône seule, couleur = niveau associé (CDC)
     themes.forEach(function (theme) {
       const ligneStructure = trouverLigneStructure_(theme);
+      if (!ligneStructure) {
+        console.warn('Aucune ligne "structure" ne correspond exactement au thème : "' + theme + '" (ressource : "' + ressource.titre + '")');
+      } else if (!ligneStructure.icone) {
+        console.warn('Le thème "' + theme + '" existe dans "structure" mais sa colonne icone est vide.');
+      }
       const icone = ligneStructure ? ligneStructure.icone : "default-icon";
       const classeCouleur = ligneStructure ? classeNiveau_(ligneStructure.niveau) : "bg-niveau-all";
 
@@ -310,23 +315,28 @@
       badges.appendChild(badge);
     });
 
-    // Badge 2 : type de document (texte selon la langue active)
-    if (ressource.type_fr || ressource.type_en) {
+    // Badge 2 : type(s) de document (texte selon la langue active) — une
+    // ressource peut avoir plusieurs types (ex : texte ET dessin humoristique).
+    const typesFr = decouperListe_(ressource.type_fr);
+    const typesEn = decouperListe_(ressource.type_en);
+    typesFr.forEach(function (typeFr, index) {
+      const typeEn = typesEn[index] || typeFr;
       const badgeType = document.createElement("span");
       badgeType.className = "badge badge--type";
-      badgeType.setAttribute("data-fr", ressource.type_fr || "");
-      badgeType.setAttribute("data-en", ressource.type_en || "");
-      badgeType.textContent = htmlEl.getAttribute("data-lang") === "EN" ? ressource.type_en : ressource.type_fr;
+      badgeType.setAttribute("data-fr", typeFr);
+      badgeType.setAttribute("data-en", typeEn);
+      badgeType.textContent = htmlEl.getAttribute("data-lang") === "EN" ? typeEn : typeFr;
       badges.appendChild(badgeType);
-    }
+    });
 
-    // Badge 3 : langue (abréviation brute, ex: FR, EN, NL)
-    if (ressource.langue) {
+    // Badge 3 : langue(s) (abréviation brute, ex: FR, EN, NL) — une ressource
+    // peut être bilingue.
+    decouperListe_(ressource.langue).forEach(function (langue) {
       const badgeLangue = document.createElement("span");
       badgeLangue.className = "badge badge--langue";
-      badgeLangue.textContent = ressource.langue;
+      badgeLangue.textContent = langue;
       badges.appendChild(badgeLangue);
-    }
+    });
 
     corps.appendChild(badges);
 
