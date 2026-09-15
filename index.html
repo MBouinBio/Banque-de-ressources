@@ -411,7 +411,7 @@
       </p>
     </div>
 
-    <button type="button" class="btn btn--secondary btn--load-more" id="btn-load-more" hidden
+    <button type="button" class="btn btn--secondary btn--load-more" id="btn-load-more" hidden style="display: none;"
             data-fr="Afficher plus" data-en="Show more">
       Afficher plus
     </button>
@@ -490,20 +490,151 @@
     </div>
 
     <div class="tab-panel" data-tab-panel="ia">
-      <p class="tab-panel__placeholder" data-fr="Le formulaire d'analyse IA sera branché à l'étape suivante (backend Code.gs)."
-                                          data-en="The AI analysis form will be wired up in the next step (Code.gs backend).">
-        Le formulaire d'analyse IA sera branché à l'étape suivante (backend Code.gs).
+
+      <!-- Étape 1 : saisie de l'URL -->
+      <div id="ia-etape-url">
+        <div class="form-group">
+          <label for="ia-url-saisie" data-fr="URL de la ressource" data-en="Resource URL">URL de la ressource</label>
+          <input type="url" id="ia-url-saisie" class="filter-input" placeholder="https://…">
+        </div>
+        <button type="button" class="btn btn--primary" id="btn-analyser"
+                data-fr="Analyser" data-en="Analyze">Analyser</button>
+        <p class="form-erreur" id="ia-erreur" hidden></p>
+      </div>
+
+      <!-- Étape 2 : chargement -->
+      <p id="ia-chargement" hidden data-fr="Analyse en cours… (peut prendre jusqu'à 30 secondes)"
+         data-en="Analyzing… (may take up to 30 seconds)">
+        Analyse en cours… (peut prendre jusqu'à 30 secondes)
       </p>
+
+      <!-- Étape 3 : ressource jugée non pertinente par l'IA -->
+      <div id="ia-rejet" hidden>
+        <p id="ia-rejet-message" class="form-erreur"></p>
+        <button type="button" class="btn btn--ghost" id="btn-continuer-malgre-tout"
+                data-fr="Je pense que c'est pertinent, continuer manuellement"
+                data-en="I think it's relevant, continue manually">
+          Je pense que c'est pertinent, continuer manuellement
+        </button>
+      </div>
+
+      <!-- Étape 4 : formulaire de relecture, pré-rempli par l'IA -->
+      <form id="form-ia" hidden></form>
     </div>
 
     <div class="tab-panel" data-tab-panel="manuel" hidden>
-      <p class="tab-panel__placeholder" data-fr="Le formulaire d'ajout manuel sera branché à l'étape suivante."
-                                          data-en="The manual entry form will be wired up in the next step.">
-        Le formulaire d'ajout manuel sera branché à l'étape suivante.
-      </p>
+      <form id="form-manuel"></form>
     </div>
   </div>
 </div>
+
+<!-- =========================================================
+     GABARIT DE FORMULAIRE — cloné en JS pour "form-ia" et
+     "form-manuel", avec un prefixe d'id différent (ia- / man-)
+     ========================================================= -->
+<template id="gabarit-formulaire-ressource">
+  <div class="form-group" data-champ="url">
+    <label data-fr="URL de la ressource" data-en="Resource URL">URL de la ressource</label>
+    <input type="url" class="filter-input" data-role="url" placeholder="https://…">
+  </div>
+
+  <div class="form-group" data-champ="titre">
+    <label data-fr="Titre" data-en="Title">Titre</label>
+    <input type="text" class="filter-input" data-role="titre" required>
+  </div>
+
+  <div class="form-group" data-champ="image">
+    <label data-fr="Image (URL, facultatif)" data-en="Image (URL, optional)">Image (URL, facultatif)</label>
+    <input type="url" class="filter-input" data-role="image" placeholder="https://…">
+  </div>
+
+  <div class="form-group" data-champ="niveau">
+    <span class="filter-group__label" data-fr="Niveau" data-en="Level">Niveau</span>
+    <p class="form-alerte" data-role="niveau-alerte" hidden
+       data-fr="Niveau non reconnu par l'IA — sélectionnez manuellement."
+       data-en="Level not recognized by the AI — select manually.">
+      Niveau non reconnu par l'IA — sélectionnez manuellement.
+    </p>
+    <div class="checkbox-list" data-role="niveau"></div>
+  </div>
+
+  <div class="form-group" data-champ="theme">
+    <span class="filter-group__label" data-fr="Thème" data-en="Theme">Thème</span>
+    <p class="form-alerte" data-role="theme-alerte" hidden
+       data-fr="Thème non reconnu par l'IA — sélectionnez manuellement."
+       data-en="Theme not recognized by the AI — select manually.">
+      Thème non reconnu par l'IA — sélectionnez manuellement.
+    </p>
+    <div class="chip-list" data-role="theme"></div>
+  </div>
+
+  <div class="form-group" data-champ="type">
+    <span class="filter-group__label" data-fr="Type de contenu" data-en="Content type">Type de contenu</span>
+    <p class="form-alerte" data-role="type-alerte" hidden
+       data-fr="Type non reconnu par l'IA — sélectionnez manuellement."
+       data-en="Type not recognized by the AI — select manually.">
+      Type non reconnu par l'IA — sélectionnez manuellement.
+    </p>
+    <div class="checkbox-list" data-role="type"></div>
+    <label class="type-autre__toggle">
+      <input type="checkbox" data-role="type-autre-active">
+      <span data-fr="Autre (préciser)" data-en="Other (specify)">Autre (préciser)</span>
+    </label>
+    <div class="type-autre__champs" data-role="type-autre-champs" hidden>
+      <input type="text" class="filter-input" data-role="type-autre-fr"
+             placeholder="Nouveau type (français)">
+      <input type="text" class="filter-input" data-role="type-autre-en"
+             placeholder="New type (English, facultatif)">
+    </div>
+  </div>
+
+  <div class="form-group" data-champ="langue">
+    <span class="filter-group__label" data-fr="Langue" data-en="Language">Langue</span>
+    <p class="form-alerte" data-role="langue-alerte" hidden
+       data-fr="Langue non reconnue par l'IA — sélectionnez manuellement."
+       data-en="Language not recognized by the AI — select manually.">
+      Langue non reconnue par l'IA — sélectionnez manuellement.
+    </p>
+    <div class="checkbox-list" data-role="langue"></div>
+  </div>
+
+  <div class="form-group" data-champ="mots-cles">
+    <label data-fr="Mots-clés (français)" data-en="Keywords (French)">Mots-clés (français)</label>
+    <div class="tag-input" data-role="mots-cles-tags"></div>
+    <input type="text" class="filter-input" data-role="mots-cles-ajout"
+           data-fr-placeholder="Taper un mot-clé puis Entrée" data-en-placeholder="Type a keyword then Enter"
+           placeholder="Taper un mot-clé puis Entrée">
+  </div>
+
+  <div class="form-group" data-champ="keywords">
+    <label data-fr="Mots-clés (anglais)" data-en="Keywords (English)">Mots-clés (anglais)</label>
+    <div class="tag-input" data-role="keywords-tags"></div>
+    <input type="text" class="filter-input" data-role="keywords-ajout"
+           placeholder="Type a keyword then Enter">
+  </div>
+
+  <div class="form-group" data-champ="propose-par">
+    <label data-fr="Proposé par (votre nom)" data-en="Suggested by (your name)">Proposé par (votre nom)</label>
+    <input type="text" class="filter-input" data-role="propose-par" required>
+  </div>
+
+  <div class="form-group" data-champ="etablissement">
+    <label data-fr="Établissement" data-en="School">Établissement</label>
+    <input type="text" class="filter-input" data-role="etablissement">
+  </div>
+
+  <p class="form-erreur" data-role="erreur-soumission" hidden></p>
+  <p class="form-succes" data-role="succes-soumission" hidden
+     data-fr="Ressource enregistrée ! Elle sera visible après validation par un modérateur."
+     data-en="Resource saved! It will be visible after moderator validation.">
+    Ressource enregistrée ! Elle sera visible après validation par un modérateur.
+  </p>
+
+  <button type="submit" class="btn btn--secondary" data-role="submit"
+          data-fr="Enregistrer" data-en="Save">
+    Enregistrer
+  </button>
+</template>
 
 <script src="app.js"></script>
 </body>
