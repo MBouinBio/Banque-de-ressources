@@ -23,14 +23,14 @@
 
   /* Annexe 2 du CDC (mise à jour) — couleurs de badges par niveau,
      palette révisée pour une meilleure distinction visuelle entre niveaux */
-  --bg-niveau-s1: #FBD5E0;  /* rose */
-  --bg-niveau-s2: #E4D2F5;  /* violet */
-  --bg-niveau-s3: #C7D9F7;  /* bleu pervenche */
-  --bg-niveau-s4: #F5D2BF;  /* rouge clair */
-  --bg-niveau-s5: #BFF0DE;  /* turquoise */
-  --bg-niveau-s6: #B9F0A9;  /* vert */
-  --bg-niveau-s7: #FCF6A2;  /* jaune */
-  --bg-niveau-sts: #FBD9AE; /* orange */
+  --bg-niveau-s1: #fbd5e0;  /* rose */
+  --bg-niveau-s2: #e4d2f5;  /* violet */
+  --bg-niveau-s3: #c7d9f7;  /* bleu pervenche */
+  --bg-niveau-s4: #f5d2bf;  /* rouge clair */
+  --bg-niveau-s5: #bff0de;  /* turquoise */
+  --bg-niveau-s6: #b9f0a9;  /* vert */
+  --bg-niveau-s7: #fcf6a2;  /* jaune */
+  --bg-niveau-sts: #fbd9ae; /* orange */
   --bg-niveau-all: #e2e4e8; /* gris neutre */
 }
 
