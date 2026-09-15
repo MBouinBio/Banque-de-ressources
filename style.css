@@ -21,16 +21,17 @@
 
   --font-base: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
-  /* Annexe 2 du CDC — couleurs de badges par niveau */
-  --bg-niveau-s1: #fce7f3;
-  --bg-niveau-s2: #f3e8ff;
-  --bg-niveau-s3: #e0e7ff;
-  --bg-niveau-s4: #dbeafe;
-  --bg-niveau-s5: #e0f2fe;
-  --bg-niveau-s6: #d1fae5;
-  --bg-niveau-s7: #fef08a;
-  --bg-niveau-sts: #ffedd5;
-  --bg-niveau-all: #f3f4f6;
+  /* Annexe 2 du CDC (mise à jour) — couleurs de badges par niveau,
+     palette révisée pour une meilleure distinction visuelle entre niveaux */
+  --bg-niveau-s1: #fbd5e0;  /* rose */
+  --bg-niveau-s2: #e4d2f5;  /* violet */
+  --bg-niveau-s3: #c7d9f7;  /* bleu pervenche */
+  --bg-niveau-s4: #bfeaf5;  /* cyan */
+  --bg-niveau-s5: #bff0de;  /* turquoise */
+  --bg-niveau-s6: #c8f0c8;  /* vert */
+  --bg-niveau-s7: #fce79e;  /* jaune */
+  --bg-niveau-sts: #fbd9ae; /* orange */
+  --bg-niveau-all: #e2e4e8; /* gris neutre */
 }
 
 * { box-sizing: border-box; }
