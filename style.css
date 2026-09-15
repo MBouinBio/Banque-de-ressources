@@ -472,6 +472,95 @@ body {
 }
 
 /* =========================================================
+   FORMULAIRE "PROPOSER UNE RESSOURCE" (IA + manuel)
+   ========================================================= */
+.form-group {
+  margin-bottom: 1.1rem;
+}
+.form-group label,
+.form-group .filter-group__label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.form-erreur {
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+}
+.form-alerte {
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.78rem;
+  margin: 0 0 0.4rem;
+}
+.form-succes {
+  background: #dcfce7;
+  color: #166534;
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+}
+
+/* Saisie de mots-clés : étiquettes + champ d'ajout */
+.tag-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+.tag-input:empty {
+  margin-bottom: 0;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem 0.2rem 0.7rem;
+  font-size: 0.8rem;
+}
+.tag__supprimer {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0 0.15rem;
+}
+.tag__supprimer:hover {
+  color: #991b1b;
+}
+
+/* Option "Autre" pour le type de contenu */
+.type-autre__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  cursor: pointer;
+}
+.type-autre__champs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* =========================================================
    RESPONSIVE — sidebar empilée sous 768px
    ========================================================= */
 @media (max-width: 768px) {
