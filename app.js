@@ -216,8 +216,8 @@
         referentielLangues = donnees.langues || [];
         donneesChargees = true;
 
-        peuplerFiltres_();
         restaurerFiltresDepuisUrl_();
+        rafraichirToutesLesFacettes_();
         appliquerFiltres_();
       })
       .catch(function (erreur) {
@@ -417,7 +417,7 @@
   }
 
   /* =======================================================
-     6. LES 8 FILTRES (génération dynamique + filtrage local)
+     6. LES 8 FILTRES — facettes dynamiques généralisées
      ======================================================= */
   const elFiltreRecherche = document.getElementById("filter-search");
   const elFiltreNiveau = document.getElementById("filter-niveau");
@@ -434,30 +434,125 @@
   }
 
   /**
-   * Construit toutes les options de filtres à partir des référentiels et
-   * des ressources chargées. Appelé une fois après chargement, et de
-   * nouveau intégralement lors d'une réinitialisation.
+   * Détermine si une ressource correspond à l'état actuel des filtres.
+   * @param {string|null} facetteIgnoree - nom du filtre à ignorer dans ce
+   *   calcul ("niveau", "themes", "type", "langues", "proposePar",
+   *   "etablissement", "motsCles"), ou null pour appliquer les 8 filtres.
+   *   Utilisé pour les facettes dynamiques : chaque filtre calcule ses
+   *   propres options disponibles en ignorant SA propre sélection, mais en
+   *   tenant compte de tous les autres filtres actifs.
    */
-  function peuplerFiltres_() {
-    // 2. Niveau — liste déroulante à choix unique (CDC confirmé).
-    const niveauxUniques = [];
-    referentielStructure.forEach(function (ligne) {
-      const n = String(ligne.niveau || "").trim();
-      if (n && niveauxUniques.indexOf(n) === -1) niveauxUniques.push(n);
+  function correspondAuxFiltres_(r, facetteIgnoree) {
+    if (filtres.recherche) {
+      const texte = [r.titre, r.theme, r.topic, r.mots_cles, r.keywords, r.type_fr, r.type_en]
+        .join(" ").toLowerCase();
+      if (texte.indexOf(filtres.recherche.toLowerCase()) === -1) return false;
+    }
+
+    if (facetteIgnoree !== "niveau" && filtres.niveau &&
+        decouperListe_(r.niveau).indexOf(filtres.niveau) === -1) return false;
+
+    // Thème : logique ET — la ressource doit avoir TOUS les thèmes cochés
+    // (transversalité pédagogique, cf. décision actée avec l'utilisatrice).
+    if (facetteIgnoree !== "themes" && filtres.themes.size > 0) {
+      const themesRessource = decouperListe_(r.theme);
+      const tousPresents = Array.from(filtres.themes).every(function (t) { return themesRessource.indexOf(t) !== -1; });
+      if (!tousPresents) return false;
+    }
+
+    if (facetteIgnoree !== "type" && filtres.type &&
+        decouperListe_(r.type_fr).indexOf(filtres.type) === -1) return false;
+
+    // Langue : logique OU — FR ou EN affiche les deux (CDC confirmé).
+    if (facetteIgnoree !== "langues" && filtres.langues.size > 0) {
+      const languesRessource = decouperListe_(r.langue);
+      const auMoinsUne = Array.from(filtres.langues).some(function (l) { return languesRessource.indexOf(l) !== -1; });
+      if (!auMoinsUne) return false;
+    }
+
+    if (facetteIgnoree !== "proposePar" && filtres.proposePar &&
+        String(r.propose_par || "").trim() !== filtres.proposePar) return false;
+
+    if (facetteIgnoree !== "etablissement" && filtres.etablissement &&
+        String(r.etablissement || "").trim() !== filtres.etablissement) return false;
+
+    // Mots-clés : logique OU (CDC confirmé).
+    if (facetteIgnoree !== "motsCles" && filtres.motsCles.size > 0) {
+      const champ = langueCourante_() === "EN" ? "keywords" : "mots_cles";
+      const motsRessource = decouperListe_(r[champ]);
+      const auMoinsUn = Array.from(filtres.motsCles).some(function (m) { return motsRessource.indexOf(m) !== -1; });
+      if (!auMoinsUn) return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Ressources compatibles avec tous les filtres actifs SAUF la facette
+   * indiquée — c'est la base de calcul de chaque liste d'options.
+   */
+  function calculerCandidatsPourFacette_(facetteIgnoree) {
+    return toutesLesRessources.filter(function (r) { return correspondAuxFiltres_(r, facetteIgnoree); });
+  }
+
+  /**
+   * Construit un <label><input type="checkbox">libellé</label>, utilisé
+   * pour les filtres langue et mots-clés.
+   */
+  function construireCaseACocher_(valeur, libelle, onChange) {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.value = valeur;
+    input.addEventListener("change", function () { onChange(input.checked); });
+    label.appendChild(input);
+    label.appendChild(document.createTextNode(" " + libelle));
+    return label;
+  }
+
+  // --- 2. Niveau : liste déroulante, uniquement les niveaux compatibles ---
+  function actualiserOptionsNiveau_() {
+    const candidats = calculerCandidatsPourFacette_("niveau");
+    const disponibles = [];
+    candidats.forEach(function (r) {
+      decouperListe_(r.niveau).forEach(function (n) { if (disponibles.indexOf(n) === -1) disponibles.push(n); });
     });
+
+    if (filtres.niveau && disponibles.indexOf(filtres.niveau) === -1) filtres.niveau = "";
+
+    // Ordre d'apparition dans le référentiel, filtré aux valeurs disponibles.
+    const ordre = [];
+    referentielStructure.forEach(function (l) {
+      const n = String(l.niveau || "").trim();
+      if (disponibles.indexOf(n) !== -1 && ordre.indexOf(n) === -1) ordre.push(n);
+    });
+
     elFiltreNiveau.innerHTML = '<option value="" data-fr="Tous les niveaux" data-en="All levels">Tous les niveaux</option>';
-    niveauxUniques.forEach(function (n) {
+    ordre.forEach(function (n) {
       const option = document.createElement("option");
       option.value = n;
       option.textContent = n;
       elFiltreNiveau.appendChild(option);
     });
     elFiltreNiveau.value = filtres.niveau;
+  }
 
-    // 3. Thème — étiquette par thème (icône + couleur de niveau + texte),
-    // sélection multiple en logique ET (transversalité pédagogique, CDC confirmé).
+  // --- 3. Thème : étiquettes, uniquement les thèmes compatibles ---
+  function actualiserOptionsTheme_() {
+    const candidats = calculerCandidatsPourFacette_("themes");
+    const disponibles = [];
+    candidats.forEach(function (r) {
+      decouperListe_(r.theme).forEach(function (t) { if (disponibles.indexOf(t) === -1) disponibles.push(t); });
+    });
+
+    Array.from(filtres.themes).forEach(function (t) {
+      if (disponibles.indexOf(t) === -1) filtres.themes.delete(t);
+    });
+
     elFiltreTheme.innerHTML = "";
     referentielStructure.forEach(function (ligne) {
+      if (disponibles.indexOf(ligne.theme) === -1) return;
+
       const chip = document.createElement("button");
       chip.type = "button";
       chip.className = "chip " + classeNiveau_(ligne.niveau);
@@ -480,11 +575,21 @@
 
       elFiltreTheme.appendChild(chip);
     });
+  }
 
-    // 4. Type de contenu — liste déroulante à choix unique (CDC confirmé),
-    // même si une ressource peut avoir plusieurs types.
+  // --- 4. Type de contenu : liste déroulante, uniquement les types compatibles ---
+  function actualiserOptionsType_() {
+    const candidats = calculerCandidatsPourFacette_("type");
+    const disponibles = [];
+    candidats.forEach(function (r) {
+      decouperListe_(r.type_fr).forEach(function (t) { if (disponibles.indexOf(t) === -1) disponibles.push(t); });
+    });
+
+    if (filtres.type && disponibles.indexOf(filtres.type) === -1) filtres.type = "";
+
     elFiltreType.innerHTML = '<option value="" data-fr="Tous les types" data-en="All types">Tous les types</option>';
     referentielTypes.forEach(function (ligne) {
+      if (disponibles.indexOf(ligne.FR) === -1) return;
       const option = document.createElement("option");
       option.value = ligne.FR;
       option.setAttribute("data-fr", ligne.FR);
@@ -493,11 +598,24 @@
       elFiltreType.appendChild(option);
     });
     elFiltreType.value = filtres.type;
+  }
 
-    // 5. Langue — cases à cocher, sélection multiple en logique OU (CDC confirmé).
+  // --- 5. Langue : cases à cocher, uniquement les langues compatibles ---
+  function actualiserOptionsLangue_() {
+    const candidats = calculerCandidatsPourFacette_("langues");
+    const disponibles = [];
+    candidats.forEach(function (r) {
+      decouperListe_(r.langue).forEach(function (l) { if (disponibles.indexOf(l) === -1) disponibles.push(l); });
+    });
+
+    Array.from(filtres.langues).forEach(function (l) {
+      if (disponibles.indexOf(l) === -1) filtres.langues.delete(l);
+    });
+
     elFiltreLangue.innerHTML = "";
     referentielLangues.forEach(function (ligne) {
       const abrev = ligne.abreviation_langue;
+      if (disponibles.indexOf(abrev) === -1) return;
       const caseACocher = construireCaseACocher_(abrev, abrev, function (coche) {
         if (coche) filtres.langues.add(abrev); else filtres.langues.delete(abrev);
         surChangementFiltre_();
@@ -505,28 +623,22 @@
       caseACocher.querySelector("input").checked = filtres.langues.has(abrev);
       elFiltreLangue.appendChild(caseACocher);
     });
-
-    // 6. Proposé par — valeurs réellement présentes (pas de référentiel dédié).
-    remplirSelectDepuisRessources_(elFiltreProposePar, "propose_par", "Tous les contributeurs", "All contributors", filtres.proposePar);
-
-    // 7. Établissement — idem.
-    remplirSelectDepuisRessources_(elFiltreEtablissement, "etablissement", "Tous les établissements", "All schools", filtres.etablissement);
-
-    // 8. Mots-clés — calculé dynamiquement en fonction des 7 autres filtres.
-    actualiserOptionsMotsCles_();
   }
 
   /**
-   * Remplit un <select> avec les valeurs uniques et non vides d'une colonne
-   * de ressource, triées alphabétiquement, précédées d'une option "Tous".
+   * Remplit un <select> à partir d'une liste de ressources déjà filtrées
+   * (candidats), pour les colonnes sans référentiel dédié (propose_par,
+   * etablissement).
    */
-  function remplirSelectDepuisRessources_(select, cle, labelFr, labelEn, valeurCourante) {
+  function remplirSelectDepuisListe_(select, candidats, cle, labelFr, labelEn, cleFiltre) {
     const valeurs = [];
-    toutesLesRessources.forEach(function (r) {
+    candidats.forEach(function (r) {
       const v = String(r[cle] || "").trim();
       if (v && valeurs.indexOf(v) === -1) valeurs.push(v);
     });
     valeurs.sort(function (a, b) { return a.localeCompare(b, "fr"); });
+
+    if (filtres[cleFiltre] && valeurs.indexOf(filtres[cleFiltre]) === -1) filtres[cleFiltre] = "";
 
     select.innerHTML = "";
     const optionTous = document.createElement("option");
@@ -542,34 +654,23 @@
       option.textContent = v;
       select.appendChild(option);
     });
-    select.value = valeurCourante || "";
+    select.value = filtres[cleFiltre] || "";
   }
 
-  /**
-   * Construit un <label><input type="checkbox">libellé</label>, utilisé
-   * pour les filtres langue et mots-clés.
-   */
-  function construireCaseACocher_(valeur, libelle, onChange) {
-    const label = document.createElement("label");
-    const input = document.createElement("input");
-    input.type = "checkbox";
-    input.value = valeur;
-    input.addEventListener("change", function () { onChange(input.checked); });
-    label.appendChild(input);
-    label.appendChild(document.createTextNode(" " + libelle));
-    return label;
+  // --- 6. Proposé par / 7. Établissement : listes déroulantes réactives ---
+  function actualiserOptionsProposePar_() {
+    remplirSelectDepuisListe_(elFiltreProposePar, calculerCandidatsPourFacette_("proposePar"),
+      "propose_par", "Tous les contributeurs", "All contributors", "proposePar");
+  }
+  function actualiserOptionsEtablissement_() {
+    remplirSelectDepuisListe_(elFiltreEtablissement, calculerCandidatsPourFacette_("etablissement"),
+      "etablissement", "Tous les établissements", "All schools", "etablissement");
   }
 
-  /**
-   * Recalcule les mots-clés disponibles (facette réductrice) : à partir des
-   * ressources qui correspondent à TOUS LES AUTRES filtres actifs (hors
-   * mots-clés lui-même), on prend l'union de leurs mots-clés dans la langue
-   * actuellement affichée. Une case déjà cochée qui n'est plus disponible
-   * est silencieusement retirée de la sélection.
-   */
+  // --- 8. Mots-clés : boîte réductrice, uniquement les mots compatibles ---
   function actualiserOptionsMotsCles_() {
     const champ = langueCourante_() === "EN" ? "keywords" : "mots_cles";
-    const candidats = toutesLesRessources.filter(function (r) { return correspondAuxFiltres_(r, true); });
+    const candidats = calculerCandidatsPourFacette_("motsCles");
 
     const motsDisponibles = [];
     candidats.forEach(function (r) {
@@ -579,7 +680,6 @@
     });
     motsDisponibles.sort(function (a, b) { return a.localeCompare(b, langueCourante_() === "EN" ? "en" : "fr"); });
 
-    // On ne garde en sélection que les mots encore réellement disponibles.
     Array.from(filtres.motsCles).forEach(function (mot) {
       if (motsDisponibles.indexOf(mot) === -1) filtres.motsCles.delete(mot);
     });
@@ -599,7 +699,7 @@
     motsDisponibles.forEach(function (mot) {
       const caseACocher = construireCaseACocher_(mot, mot, function (coche) {
         if (coche) filtres.motsCles.add(mot); else filtres.motsCles.delete(mot);
-        appliquerFiltres_(); // les mots-clés ne se recalculent pas eux-mêmes
+        surChangementFiltre_();
       });
       caseACocher.querySelector("input").checked = filtres.motsCles.has(mot);
       elFiltreMotsCles.appendChild(caseACocher);
@@ -607,49 +707,18 @@
   }
 
   /**
-   * Détermine si une ressource correspond à l'état actuel des filtres.
-   * @param {boolean} ignorerMotsCles - si true, le filtre mots-clés n'est
-   *   pas pris en compte (utilisé pour calculer les mots-clés disponibles
-   *   sans que le filtre ne se limite lui-même).
+   * Reconstruit les 8 filtres, chacun ne proposant que les options
+   * compatibles avec l'état actuel des 7 autres — facettes dynamiques
+   * généralisées à l'ensemble des filtres (décision actée avec l'utilisatrice).
    */
-  function correspondAuxFiltres_(r, ignorerMotsCles) {
-    if (filtres.recherche) {
-      const texte = [r.titre, r.theme, r.topic, r.mots_cles, r.keywords, r.type_fr, r.type_en]
-        .join(" ").toLowerCase();
-      if (texte.indexOf(filtres.recherche.toLowerCase()) === -1) return false;
-    }
-
-    if (filtres.niveau && decouperListe_(r.niveau).indexOf(filtres.niveau) === -1) return false;
-
-    // Thème : logique ET — la ressource doit avoir TOUS les thèmes cochés
-    // (transversalité pédagogique, cf. décision actée avec l'utilisatrice).
-    if (filtres.themes.size > 0) {
-      const themesRessource = decouperListe_(r.theme);
-      const tousPresents = Array.from(filtres.themes).every(function (t) { return themesRessource.indexOf(t) !== -1; });
-      if (!tousPresents) return false;
-    }
-
-    if (filtres.type && decouperListe_(r.type_fr).indexOf(filtres.type) === -1) return false;
-
-    // Langue : logique OU — FR ou EN affiche les deux (CDC confirmé).
-    if (filtres.langues.size > 0) {
-      const languesRessource = decouperListe_(r.langue);
-      const auMoinsUne = Array.from(filtres.langues).some(function (l) { return languesRessource.indexOf(l) !== -1; });
-      if (!auMoinsUne) return false;
-    }
-
-    if (filtres.proposePar && String(r.propose_par || "").trim() !== filtres.proposePar) return false;
-    if (filtres.etablissement && String(r.etablissement || "").trim() !== filtres.etablissement) return false;
-
-    // Mots-clés : logique OU (CDC confirmé).
-    if (!ignorerMotsCles && filtres.motsCles.size > 0) {
-      const champ = langueCourante_() === "EN" ? "keywords" : "mots_cles";
-      const motsRessource = decouperListe_(r[champ]);
-      const auMoinsUn = Array.from(filtres.motsCles).some(function (m) { return motsRessource.indexOf(m) !== -1; });
-      if (!auMoinsUn) return false;
-    }
-
-    return true;
+  function rafraichirToutesLesFacettes_() {
+    actualiserOptionsNiveau_();
+    actualiserOptionsTheme_();
+    actualiserOptionsType_();
+    actualiserOptionsLangue_();
+    actualiserOptionsProposePar_();
+    actualiserOptionsEtablissement_();
+    actualiserOptionsMotsCles_();
   }
 
   /**
@@ -657,19 +726,19 @@
    * et met à jour l'URL.
    */
   function appliquerFiltres_() {
-    ressourcesAffichees = toutesLesRessources.filter(function (r) { return correspondAuxFiltres_(r, false); });
+    ressourcesAffichees = toutesLesRessources.filter(function (r) { return correspondAuxFiltres_(r, null); });
     nombreCartesVisibles = 0;
     afficherLotSuivant();
     actualiserUrlFiltres_();
   }
 
   /**
-   * À appeler quand un filtre AUTRE que les mots-clés change : recalcule
-   * d'abord les mots-clés disponibles (facette dépendante), puis applique
-   * l'ensemble des filtres.
+   * À appeler à chaque changement de n'importe quel filtre : reconstruit
+   * toutes les facettes (chacune peut désormais dépendre de toutes les
+   * autres), puis applique le résultat à la grille.
    */
   function surChangementFiltre_() {
-    actualiserOptionsMotsCles_();
+    rafraichirToutesLesFacettes_();
     appliquerFiltres_();
   }
 
@@ -695,7 +764,8 @@
 
   /**
    * Restaure l'état des filtres depuis les paramètres d'URL au premier
-   * chargement (partage de lien avec une vue filtrée déjà en place).
+   * chargement. Ne touche pas au DOM directement : rafraichirToutesLesFacettes_
+   * (appelé juste après) reflète cet état sur chaque contrôle.
    */
   function restaurerFiltresDepuisUrl_() {
     const params = new URLSearchParams(window.location.search);
@@ -704,29 +774,12 @@
     elFiltreRecherche.value = filtres.recherche;
 
     filtres.niveau = params.get("niveau") || "";
-    elFiltreNiveau.value = filtres.niveau;
-
     (params.get("theme") || "").split(",").filter(Boolean).forEach(function (t) { filtres.themes.add(t); });
-    elFiltreTheme.querySelectorAll(".chip").forEach(function (chip) {
-      if (filtres.themes.has(chip.dataset.theme)) chip.setAttribute("aria-pressed", "true");
-    });
-
     filtres.type = params.get("type") || "";
-    elFiltreType.value = filtres.type;
-
     (params.get("langue") || "").split(",").filter(Boolean).forEach(function (l) { filtres.langues.add(l); });
-    elFiltreLangue.querySelectorAll("input[type=checkbox]").forEach(function (input) {
-      if (filtres.langues.has(input.value)) input.checked = true;
-    });
-
     filtres.proposePar = params.get("par") || "";
-    elFiltreProposePar.value = filtres.proposePar;
-
     filtres.etablissement = params.get("etablissement") || "";
-    elFiltreEtablissement.value = filtres.etablissement;
-
     (params.get("motscles") || "").split(",").filter(Boolean).forEach(function (m) { filtres.motsCles.add(m); });
-    actualiserOptionsMotsCles_(); // reconstruit les cases et coche celles restaurées si toujours disponibles
   }
 
   // --- Écouteurs des filtres simples (texte + menus déroulants) ---
@@ -761,7 +814,7 @@
     filtres.etablissement = "";
     filtres.motsCles.clear();
     elFiltreRecherche.value = "";
-    peuplerFiltres_(); // reconstruit tout, y compris les cases décochées
+    rafraichirToutesLesFacettes_();
     appliquerFiltres_();
   });
 
