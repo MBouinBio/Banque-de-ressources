@@ -532,9 +532,25 @@
       const option = document.createElement("option");
       option.value = n;
       option.textContent = n;
+      option.style.backgroundColor = couleurDeNiveau_(n);
+      option.style.color = "#1e293b";
       elFiltreNiveau.appendChild(option);
     });
     elFiltreNiveau.value = filtres.niveau;
+    elFiltreNiveau.style.backgroundColor = filtres.niveau ? couleurDeNiveau_(filtres.niveau) : "";
+    elFiltreNiveau.style.color = filtres.niveau ? "#1e293b" : "";
+  }
+
+  /**
+   * Lit la couleur de fond réelle (Annexe 2) associée à un niveau, via la
+   * variable CSS correspondante — évite de dupliquer la palette en JS.
+   * NOTE : le style des <option> d'un <select> natif n'est pas garanti sur
+   * tous les navigateurs (Safari macOS/iOS l'ignore souvent) ; c'est une
+   * limitation de la plateforme, pas un bug de cette fonction.
+   */
+  function couleurDeNiveau_(niveau) {
+    const nomVariable = "--" + classeNiveau_(niveau);
+    return getComputedStyle(document.documentElement).getPropertyValue(nomVariable).trim();
   }
 
   // --- 3. Thème : étiquettes, uniquement les thèmes compatibles ---
