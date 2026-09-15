@@ -124,7 +124,10 @@
   const modalAddResource = document.getElementById("modal-add-resource");
 
   document.getElementById("btn-open-about").addEventListener("click", () => openModal(modalAbout));
-  document.getElementById("btn-open-add-resource").addEventListener("click", () => openModal(modalAddResource));
+  document.getElementById("btn-open-add-resource").addEventListener("click", () => {
+    if (typeof reinitialiserModaleAjout_ === "function") reinitialiserModaleAjout_();
+    openModal(modalAddResource);
+  });
 
   // Un bouton "Signaler un problème" par carte (démo actuelle + cartes futures)
   document.addEventListener("click", (event) => {
@@ -219,6 +222,8 @@
         restaurerFiltresDepuisUrl_();
         rafraichirToutesLesFacettes_();
         appliquerFiltres_();
+        construireFormulaire_(formIA);
+        construireFormulaire_(formManuel);
       })
       .catch(function (erreur) {
         grille.innerHTML =
@@ -833,6 +838,365 @@
     rafraichirToutesLesFacettes_();
     appliquerFiltres_();
   });
+
+  /* =======================================================
+     7. MODALE "PROPOSER UNE RESSOURCE" (IA + manuel)
+     ======================================================= */
+
+  // ATTENTION : à remplacer par la vraie valeur de la propriété de script
+  // "API_SECRET_TOKEN" côté Apps Script. Visible dans le code source client
+  // (limite structurelle déjà actée dans "Limites acceptées").
+  const TOKEN_FRONTEND = "REMPLACE_PAR_TON_TOKEN";
+  const ORIGIN_DECLARE = window.location.origin;
+
+  const gabaritFormulaire = document.getElementById("gabarit-formulaire-ressource");
+  const formIA = document.getElementById("form-ia");
+  const formManuel = document.getElementById("form-manuel");
+
+  /**
+   * Construit un formulaire (IA ou manuel) à partir du gabarit <template>,
+   * peuple ses listes de niveau/thème/type/langue depuis les référentiels,
+   * et branche la saisie de mots-clés + l'option "Autre" + la soumission.
+   */
+  function construireFormulaire_(form) {
+    form.innerHTML = "";
+    form.appendChild(gabaritFormulaire.content.cloneNode(true));
+    form.__motsCles = [];
+    form.__keywords = [];
+
+    // Niveau (cases à cocher, toutes indépendantes)
+    const conteneurNiveau = form.querySelector('[data-role="niveau"]');
+    const niveauxUniques = [];
+    referentielStructure.forEach(function (l) {
+      const n = String(l.niveau || "").trim();
+      if (n && niveauxUniques.indexOf(n) === -1) niveauxUniques.push(n);
+    });
+    niveauxUniques.forEach(function (n) {
+      conteneurNiveau.appendChild(construireCaseACocher_(n, n, function () {}));
+    });
+
+    // Thème (étiquettes cliquables, indépendantes les unes des autres —
+    // contrairement au filtre, il n'y a pas de logique ET/OU ici, juste
+    // une sélection multiple libre pour décrire la ressource).
+    const conteneurTheme = form.querySelector('[data-role="theme"]');
+    referentielStructure.forEach(function (ligne) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip " + classeNiveau_(ligne.niveau);
+      chip.setAttribute("aria-pressed", "false");
+      chip.dataset.theme = ligne.theme;
+      const icone = ligne.icone || "default-icon";
+      chip.innerHTML =
+        '<svg width="14" height="14" aria-hidden="true"><use href="#' + icone + '"></use></svg>' +
+        '<span data-fr="' + ligne.theme + '" data-en="' + (ligne.topic || ligne.theme) + '">' +
+        (langueCourante_() === "EN" ? (ligne.topic || ligne.theme) : ligne.theme) + '</span>';
+      chip.addEventListener("click", function () {
+        chip.setAttribute("aria-pressed", chip.getAttribute("aria-pressed") === "true" ? "false" : "true");
+      });
+      conteneurTheme.appendChild(chip);
+    });
+
+    // Type de contenu (cases à cocher) + option "Autre"
+    const conteneurType = form.querySelector('[data-role="type"]');
+    referentielTypes.forEach(function (ligne) {
+      const caseType = construireCaseACocher_(ligne.FR, langueCourante_() === "EN" ? ligne.EN : ligne.FR, function () {});
+      caseType.querySelector("input").dataset.typeEn = ligne.EN;
+      conteneurType.appendChild(caseType);
+    });
+    const toggleAutre = form.querySelector('[data-role="type-autre-active"]');
+    const champsAutre = form.querySelector('[data-role="type-autre-champs"]');
+    toggleAutre.addEventListener("change", function () {
+      champsAutre.hidden = !toggleAutre.checked;
+    });
+
+    // Langue (cases à cocher)
+    const conteneurLangue = form.querySelector('[data-role="langue"]');
+    referentielLangues.forEach(function (ligne) {
+      const abrev = ligne.abreviation_langue;
+      conteneurLangue.appendChild(construireCaseACocher_(abrev, abrev, function () {}));
+    });
+
+    // Mots-clés / keywords : étiquettes + champ d'ajout
+    brancherTagInput_(form, "mots-cles", "__motsCles");
+    brancherTagInput_(form, "keywords", "__keywords");
+
+    // Soumission
+    form.addEventListener("submit", function (evenement) {
+      evenement.preventDefault();
+      soumettreFormulaire_(form);
+    });
+  }
+
+  /**
+   * Branche un champ de saisie de mots-clés sous forme d'étiquettes
+   * (ajout par Entrée ou virgule, suppression par le bouton "×" de
+   * chaque étiquette). L'état vit dans form[proprieteEtat] (un tableau).
+   */
+  function brancherTagInput_(form, role, proprieteEtat) {
+    const conteneurTags = form.querySelector('[data-role="' + role + '-tags"]');
+    const champAjout = form.querySelector('[data-role="' + role + '-ajout"]');
+
+    function reafficher() {
+      conteneurTags.innerHTML = "";
+      form[proprieteEtat].forEach(function (valeur, index) {
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.appendChild(document.createTextNode(valeur));
+
+        const boutonSupprimer = document.createElement("button");
+        boutonSupprimer.type = "button";
+        boutonSupprimer.className = "tag__supprimer";
+        boutonSupprimer.setAttribute("aria-label", "Supprimer");
+        boutonSupprimer.textContent = "×";
+        boutonSupprimer.addEventListener("click", function () {
+          form[proprieteEtat].splice(index, 1);
+          reafficher();
+        });
+
+        tag.appendChild(boutonSupprimer);
+        conteneurTags.appendChild(tag);
+      });
+    }
+
+    champAjout.addEventListener("keydown", function (evenement) {
+      if (evenement.key === "Enter" || evenement.key === ",") {
+        evenement.preventDefault();
+        const valeur = champAjout.value.trim().replace(/,$/, "");
+        if (valeur && form[proprieteEtat].indexOf(valeur) === -1) {
+          form[proprieteEtat].push(valeur);
+          reafficher();
+        }
+        champAjout.value = "";
+      }
+    });
+
+    form["__reafficher_" + role] = reafficher;
+    reafficher();
+  }
+
+  /**
+   * Coche, dans un groupe de cases à cocher du formulaire, celles dont la
+   * valeur figure dans le tableau fourni — sauf si "reconnu" est false,
+   * auquel cas on laisse tout décoché et on affiche le message d'alerte
+   * (décision actée : même traitement pour niveau/thème/type/langue).
+   */
+  function cocherSiReconnu_(form, role, valeurs, reconnu) {
+    const alerte = form.querySelector('[data-role="' + role + '-alerte"]');
+    alerte.hidden = reconnu !== false;
+    if (reconnu === false) return;
+
+    form.querySelectorAll('[data-role="' + role + '"] input[type="checkbox"]').forEach(function (input) {
+      input.checked = (valeurs || []).indexOf(input.value) !== -1;
+    });
+  }
+
+  /** Variante pour le thème, qui utilise des étiquettes (aria-pressed) et non des cases à cocher. */
+  function cocherThemesSiReconnu_(form, valeurs, reconnu) {
+    const alerte = form.querySelector('[data-role="theme-alerte"]');
+    alerte.hidden = reconnu !== false;
+    if (reconnu === false) return;
+
+    form.querySelectorAll('[data-role="theme"] .chip').forEach(function (chip) {
+      chip.setAttribute("aria-pressed", (valeurs || []).indexOf(chip.dataset.theme) !== -1 ? "true" : "false");
+    });
+  }
+
+  /**
+   * Pré-remplit le formulaire IA à partir de la réponse de analyzeUrl.
+   * Si la ressource a été jugée non pertinente et que l'utilisateur choisit
+   * de continuer malgré tout, la classification (niveau/thème/type/langue)
+   * n'est délibérément PAS pré-remplie, même si l'IA en a proposé une —
+   * elle n'est pas fiable dans ce cas de figure.
+   */
+  function preRemplirFormulaireIA_(resultat, urlAnalysee, classificationFiable) {
+    formIA.querySelector('[data-role="url"]').value = urlAnalysee;
+    formIA.querySelector('[data-role="titre"]').value = resultat.titre || "";
+    formIA.querySelector('[data-role="image"]').value = resultat.image || "";
+
+    if (classificationFiable) {
+      cocherSiReconnu_(formIA, "niveau", resultat.niveau, resultat.niveau_reconnu);
+      cocherThemesSiReconnu_(formIA, resultat.theme, resultat.theme_reconnu);
+      cocherSiReconnu_(formIA, "type", resultat.type_fr, resultat.type_reconnu);
+      cocherSiReconnu_(formIA, "langue", resultat.langue, resultat.langue_reconnue);
+      formIA.__motsCles = (resultat.mots_cles || []).slice();
+      formIA.__keywords = (resultat.keywords || []).slice();
+    } else {
+      cocherSiReconnu_(formIA, "niveau", [], false);
+      cocherThemesSiReconnu_(formIA, [], false);
+      cocherSiReconnu_(formIA, "type", [], false);
+      cocherSiReconnu_(formIA, "langue", [], false);
+      formIA.__motsCles = [];
+      formIA.__keywords = [];
+    }
+    formIA["__reafficher_mots-cles"]();
+    formIA["__reafficher_keywords"]();
+  }
+
+  /**
+   * Lit l'état complet d'un formulaire (IA ou manuel) pour construire le
+   * payload attendu par l'endpoint d'écriture.
+   */
+  function lireFormulaire_(form) {
+    const lireChamp = function (role) {
+      return form.querySelector('[data-role="' + role + '"]').value.trim();
+    };
+    const lireCoches = function (role) {
+      return Array.from(form.querySelectorAll('[data-role="' + role + '"] input[type="checkbox"]:checked'))
+        .map(function (input) { return input.value; });
+    };
+    const lireThemesCoches = function () {
+      return Array.from(form.querySelectorAll('[data-role="theme"] .chip[aria-pressed="true"]'))
+        .map(function (chip) { return chip.dataset.theme; });
+    };
+
+    const donnees = {
+      url: lireChamp("url"),
+      titre: lireChamp("titre"),
+      image: lireChamp("image"),
+      niveau: lireCoches("niveau"),
+      theme: lireThemesCoches(),
+      type_fr: lireCoches("type"),
+      type_en: Array.from(form.querySelectorAll('[data-role="type"] input[type="checkbox"]:checked'))
+        .map(function (input) { return input.dataset.typeEn || ""; }),
+      langue: lireCoches("langue"),
+      mots_cles: form.__motsCles.slice(),
+      keywords: form.__keywords.slice(),
+      propose_par: lireChamp("propose-par"),
+      etablissement: lireChamp("etablissement")
+    };
+
+    // Option "Autre" : ajoute un type supplémentaire hors référentiel.
+    if (form.querySelector('[data-role="type-autre-active"]').checked) {
+      const typeAutreFr = form.querySelector('[data-role="type-autre-fr"]').value.trim();
+      if (typeAutreFr) {
+        donnees.type_fr.push(typeAutreFr);
+        donnees.type_en.push(form.querySelector('[data-role="type-autre-en"]').value.trim());
+      }
+    }
+
+    return donnees;
+  }
+
+  /**
+   * Envoie le formulaire au backend (POST no-cors). Comme la réponse n'est
+   * jamais lisible en no-cors, l'UI affiche un succès dès l'envoi — c'est
+   * un optimisme délibéré, déjà documenté dans les "Limites acceptées".
+   */
+  function soumettreFormulaire_(form) {
+    const donnees = lireFormulaire_(form);
+    const erreurEl = form.querySelector('[data-role="erreur-soumission"]');
+    const succesEl = form.querySelector('[data-role="succes-soumission"]');
+    erreurEl.hidden = true;
+    succesEl.hidden = true;
+
+    if (!donnees.url || !donnees.titre || !donnees.propose_par) {
+      erreurEl.textContent = langueCourante_() === "EN"
+        ? "Please fill in the URL, the title and your name."
+        : "Merci de renseigner l'URL, le titre et votre nom.";
+      erreurEl.hidden = false;
+      return;
+    }
+
+    donnees.token = TOKEN_FRONTEND;
+    donnees.origin = ORIGIN_DECLARE;
+
+    fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(donnees)
+    });
+
+    succesEl.hidden = false;
+    reinitialiserFormulaire_(form);
+  }
+
+  /** Remet un formulaire à zéro (après envoi, ou à l'ouverture de la modale). */
+  function reinitialiserFormulaire_(form) {
+    form.reset();
+    form.__motsCles = [];
+    form.__keywords = [];
+    if (form["__reafficher_mots-cles"]) form["__reafficher_mots-cles"]();
+    if (form["__reafficher_keywords"]) form["__reafficher_keywords"]();
+    form.querySelectorAll(".chip").forEach(function (chip) { chip.setAttribute("aria-pressed", "false"); });
+    form.querySelectorAll(".form-alerte").forEach(function (alerte) { alerte.hidden = true; });
+    const toggleAutre = form.querySelector('[data-role="type-autre-active"]');
+    if (toggleAutre) toggleAutre.checked = false;
+    const champsAutre = form.querySelector('[data-role="type-autre-champs"]');
+    if (champsAutre) champsAutre.hidden = true;
+  }
+
+  // --- Bouton "Analyser" (onglet IA) ---
+  document.getElementById("btn-analyser").addEventListener("click", function () {
+    const url = document.getElementById("ia-url-saisie").value.trim();
+    const erreurEl = document.getElementById("ia-erreur");
+    erreurEl.hidden = true;
+
+    if (!url) {
+      erreurEl.textContent = langueCourante_() === "EN" ? "Please enter a URL." : "Merci de saisir une URL.";
+      erreurEl.hidden = false;
+      return;
+    }
+
+    document.getElementById("ia-etape-url").hidden = true;
+    document.getElementById("ia-chargement").hidden = false;
+
+    const params = new URLSearchParams({
+      action: "analyzeUrl",
+      token: TOKEN_FRONTEND,
+      origin: ORIGIN_DECLARE,
+      url: url
+    });
+
+    fetch(APPS_SCRIPT_URL + "?" + params.toString())
+      .then(function (reponse) { return reponse.json(); })
+      .then(function (resultat) {
+        document.getElementById("ia-chargement").hidden = true;
+
+        if (resultat.erreur) {
+          document.getElementById("ia-etape-url").hidden = false;
+          erreurEl.textContent = resultat.erreur;
+          erreurEl.hidden = false;
+          return;
+        }
+
+        if (!resultat.est_pertinent) {
+          document.getElementById("ia-rejet").hidden = false;
+          document.getElementById("ia-rejet-message").textContent =
+            langueCourante_() === "EN" ? resultat.motif_rejet_en : resultat.motif_rejet_fr;
+          document.getElementById("btn-continuer-malgre-tout").onclick = function () {
+            document.getElementById("ia-rejet").hidden = true;
+            formIA.hidden = false;
+            preRemplirFormulaireIA_(resultat, url, false);
+          };
+          return;
+        }
+
+        formIA.hidden = false;
+        preRemplirFormulaireIA_(resultat, url, true);
+      })
+      .catch(function (erreur) {
+        document.getElementById("ia-chargement").hidden = true;
+        document.getElementById("ia-etape-url").hidden = false;
+        erreurEl.textContent = (langueCourante_() === "EN" ? "Network error: " : "Erreur réseau : ") + erreur.message;
+        erreurEl.hidden = false;
+      });
+  });
+
+  /**
+   * Remet la modale d'ajout à son état initial (étape URL de l'onglet IA,
+   * formulaires vidés) à chaque ouverture — appelé depuis la section 2.
+   */
+  function reinitialiserModaleAjout_() {
+    document.getElementById("ia-url-saisie").value = "";
+    document.getElementById("ia-erreur").hidden = true;
+    document.getElementById("ia-etape-url").hidden = false;
+    document.getElementById("ia-chargement").hidden = true;
+    document.getElementById("ia-rejet").hidden = true;
+    formIA.hidden = true;
+    reinitialiserFormulaire_(formIA);
+    reinitialiserFormulaire_(formManuel);
+  }
 
   chargerDonnees();
 })();
