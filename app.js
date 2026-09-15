@@ -1,384 +1,502 @@
-/**
- * app.js
- *
- * Gère actuellement :
- *   1. Le switch de langue FR/EN (texte de l'interface + persistance URL ?lang=)
- *   2. L'ouverture/fermeture des modales (À propos, Signaler, Proposer une ressource)
- *   3. L'empilement de la sidebar sur mobile
- *   4. Les onglets de la modale "Proposer une ressource"
- *   5. Le chargement des données réelles (action=getData) et l'affichage
- *      des cartes-ressources, paginé 12 par 12 ("Afficher plus")
- *
- * NE FAIT PAS ENCORE (prochaines étapes) :
- *   - la génération dynamique des 8 filtres et le filtrage réel des cartes
- *   - la persistance des filtres dans l'URL (seul ?lang= est géré ici)
- *   - la modale d'ajout (IA + manuel) connectée au backend
- */
+/* =========================================================
+   VARIABLES — palette institutionnelle standard
+   ========================================================= */
+:root {
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text: #1e293b;
+  --color-text-muted: #64748b;
 
-(function () {
-  "use strict";
+  --color-primary: #2563eb;      /* bleu action */
+  --color-primary-hover: #1d4ed8;
+  --color-secondary: #16a34a;    /* vert action */
+  --color-secondary-hover: #15803d;
 
-  /* =======================================================
-     1. GESTION DE LA LANGUE (FR / EN)
-     ======================================================= */
-  const langToggle = document.getElementById("lang-toggle");
-  const htmlEl = document.documentElement;
+  --radius-sm: 6px;
+  --radius-md: 10px;
 
-  function applyLang(lang) {
-    htmlEl.setAttribute("data-lang", lang);
-    htmlEl.setAttribute("lang", lang === "EN" ? "en" : "fr");
-    langToggle.setAttribute("aria-checked", lang === "EN" ? "true" : "false");
+  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-card-hover: 0 8px 20px rgba(15, 23, 42, 0.12);
 
-    // Textes simples portés par data-fr / data-en
-    document.querySelectorAll("[data-fr][data-en]").forEach((el) => {
-      el.textContent = lang === "EN" ? el.dataset.en : el.dataset.fr;
-    });
+  --font-base: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
-    // Placeholders portés par data-fr-placeholder / data-en-placeholder
-    document.querySelectorAll("[data-fr-placeholder][data-en-placeholder]").forEach((el) => {
-      el.setAttribute(
-        "placeholder",
-        lang === "EN" ? el.dataset.enPlaceholder : el.dataset.frPlaceholder
-      );
-    });
+  /* Annexe 2 du CDC — couleurs de badges par niveau */
+  --bg-niveau-s1: #fce7f3;
+  --bg-niveau-s2: #f3e8ff;
+  --bg-niveau-s3: #e0e7ff;
+  --bg-niveau-s4: #dbeafe;
+  --bg-niveau-s5: #e0f2fe;
+  --bg-niveau-s6: #d1fae5;
+  --bg-niveau-s7: #fef08a;
+  --bg-niveau-sts: #ffedd5;
+  --bg-niveau-all: #f3f4f6;
+}
 
-    // Blocs entiers bilingues (ex : modale "À propos")
-    document.querySelectorAll("[data-lang-block]").forEach((el) => {
-      el.hidden = el.getAttribute("data-lang-block") !== lang;
-    });
+* { box-sizing: border-box; }
 
-    // Persistance dans l'URL (history.replaceState, comme exigé par le CDC)
-    const params = new URLSearchParams(window.location.search);
-    params.set("lang", lang);
-    history.replaceState(null, "", "?" + params.toString());
+body {
+  margin: 0;
+  font-family: var(--font-base);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+/* =========================================================
+   BADGES DE NIVEAU (Annexe 2 — texte identique au CDC)
+   ========================================================= */
+.bg-niveau-s1  { background-color: var(--bg-niveau-s1);  color: var(--color-text); }
+.bg-niveau-s2  { background-color: var(--bg-niveau-s2);  color: var(--color-text); }
+.bg-niveau-s3  { background-color: var(--bg-niveau-s3);  color: var(--color-text); }
+.bg-niveau-s4  { background-color: var(--bg-niveau-s4);  color: var(--color-text); }
+.bg-niveau-s5  { background-color: var(--bg-niveau-s5);  color: var(--color-text); }
+.bg-niveau-s6  { background-color: var(--bg-niveau-s6);  color: var(--color-text); }
+.bg-niveau-s7  { background-color: var(--bg-niveau-s7);  color: var(--color-text); }
+.bg-niveau-sts { background-color: var(--bg-niveau-sts); color: var(--color-text); }
+.bg-niveau-all { background-color: var(--bg-niveau-all); color: var(--color-text); }
+
+.badge-icone svg { stroke: currentColor; }
+
+/* =========================================================
+   BOUTONS
+   ========================================================= */
+.btn {
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+.btn:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+.btn--primary { background: var(--color-primary); color: #fff; }
+.btn--primary:hover { background: var(--color-primary-hover); }
+
+.btn--secondary { background: var(--color-secondary); color: #fff; }
+.btn--secondary:hover { background: var(--color-secondary-hover); }
+
+.btn--link {
+  background: transparent;
+  color: var(--color-primary);
+  border-color: transparent;
+  padding: 0.55rem 0.5rem;
+}
+.btn--link:hover { text-decoration: underline; }
+
+.btn--ghost {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+.btn--ghost:hover { background: var(--color-bg); }
+
+.btn--full { width: 100%; margin-top: 0.5rem; }
+
+.btn--load-more {
+  display: block;
+  margin: 1.5rem auto 0;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+.site-header {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.site-header__inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.site-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text);
+  max-width: 60ch;
+}
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Toggle switch FR/EN */
+.lang-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.lang-switch__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+.lang-switch__toggle {
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+}
+.lang-switch__toggle[aria-checked="true"] { background: var(--color-secondary); }
+.lang-switch__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+.lang-switch__toggle[aria-checked="true"] .lang-switch__knob {
+  transform: translateX(20px);
+}
+
+/* =========================================================
+   LAYOUT PRINCIPAL
+   ========================================================= */
+.layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+.sidebar {
+  position: sticky;
+  top: 76px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+}
+.sidebar__mobile-toggle { display: none; }
+
+.filter-group { margin-bottom: 1.25rem; }
+.filter-group:last-of-type { margin-bottom: 0.5rem; }
+
+.filter-group label,
+.filter-group__label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.filter-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.filter-input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.chip {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.chip[aria-pressed="true"] {
+  border-color: currentColor;
+  font-weight: 700;
+}
+
+.checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.checkbox-list label {
+  font-weight: 400;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Filtre mots-clés : hauteur fixe + ascenseur (facette réductrice) */
+.keyword-box {
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.keyword-box label {
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* =========================================================
+   GRILLE DE CARTES
+   ========================================================= */
+.result-count {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0 0 1rem;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.card-grid__etat {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 2rem 0;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+.card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-3px);
+}
+
+.card__image-wrap {
+  aspect-ratio: 16 / 9;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+.card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.card__body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex: 1;
+}
+
+.card__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.badge {
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.badge--niveau {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+.badge--type {
+  background: #e5e7eb;
+  color: var(--color-text);
+}
+.badge--langue {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.card__meta {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.card__report-btn {
+  align-self: flex-start;
+  margin-top: auto;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* =========================================================
+   MODALES
+   ========================================================= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 100;
+}
+.modal-overlay[hidden] { display: none; }
+
+.modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 1.75rem;
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+.modal--small { max-width: 420px; }
+.modal--large { max-width: 720px; }
+
+.modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+.modal__actions {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Onglets de la modale d'ajout */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  margin: 1rem 0 1.25rem;
+}
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.6rem 0.2rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.tab--active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+.tab-panel__placeholder {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+/* =========================================================
+   RESPONSIVE — sidebar empilée sous 768px
+   ========================================================= */
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+    padding: 1rem;
   }
-
-  langToggle.addEventListener("click", () => {
-    const current = htmlEl.getAttribute("data-lang") === "EN" ? "EN" : "FR";
-    applyLang(current === "EN" ? "FR" : "EN");
-  });
-
-  // Lecture initiale de l'URL au chargement (?lang=EN)
-  const initialParams = new URLSearchParams(window.location.search);
-  const initialLang = initialParams.get("lang") === "EN" ? "EN" : "FR";
-  applyLang(initialLang);
-
-  /* =======================================================
-     2. GESTION DES MODALES
-     ======================================================= */
-  function openModal(modalEl) {
-    modalEl.hidden = false;
+  .sidebar {
+    position: static;
+    max-height: none;
   }
-  function closeModal(modalEl) {
-    modalEl.hidden = true;
+  .sidebar__mobile-toggle {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 0.9rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-bottom: 0.75rem;
   }
-
-  const modalAbout = document.getElementById("modal-about");
-  const modalReport = document.getElementById("modal-report");
-  const modalAddResource = document.getElementById("modal-add-resource");
-
-  document.getElementById("btn-open-about").addEventListener("click", () => openModal(modalAbout));
-  document.getElementById("btn-open-add-resource").addEventListener("click", () => openModal(modalAddResource));
-
-  // Un bouton "Signaler un problème" par carte (démo actuelle + cartes futures)
-  document.addEventListener("click", (event) => {
-    if (event.target.closest(".btn-open-report")) {
-      openModal(modalReport);
-    }
-  });
-
-  // Fermeture : bouton dédié, clic sur l'overlay, ou touche Échap
-  document.querySelectorAll("[data-close-modal]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      closeModal(btn.closest(".modal-overlay"));
-    });
-  });
-
-  document.querySelectorAll(".modal-overlay").forEach((overlay) => {
-    overlay.addEventListener("click", (event) => {
-      if (event.target === overlay) closeModal(overlay);
-    });
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      document.querySelectorAll(".modal-overlay:not([hidden])").forEach(closeModal);
-    }
-  });
-
-  /* =======================================================
-     3. SIDEBAR MOBILE (empilement < 768px)
-     ======================================================= */
-  const sidebarToggle = document.getElementById("sidebar-mobile-toggle");
-  const sidebarContent = document.getElementById("sidebar-content");
-
-  sidebarToggle.addEventListener("click", () => {
-    const isCollapsed = sidebarContent.getAttribute("data-collapsed") === "true";
-    sidebarContent.setAttribute("data-collapsed", isCollapsed ? "false" : "true");
-    sidebarToggle.setAttribute("aria-expanded", isCollapsed ? "true" : "false");
-  });
-
-  // Sur mobile, la sidebar démarre repliée ; sur desktop, toujours visible.
-  function initSidebarState() {
-    if (window.innerWidth < 768) {
-      sidebarContent.setAttribute("data-collapsed", "true");
-    } else {
-      sidebarContent.removeAttribute("data-collapsed");
-    }
+  .sidebar__content[data-collapsed="true"] {
+    display: none;
   }
-  initSidebarState();
-  window.addEventListener("resize", initSidebarState);
-
-  /* =======================================================
-     4. ONGLETS DE LA MODALE "PROPOSER UNE RESSOURCE"
-     ======================================================= */
-  const tabs = document.querySelectorAll(".tab");
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      tabs.forEach((t) => {
-        t.classList.remove("tab--active");
-        t.setAttribute("aria-selected", "false");
-      });
-      tab.classList.add("tab--active");
-      tab.setAttribute("aria-selected", "true");
-
-      const targetName = tab.dataset.tab;
-      document.querySelectorAll("[data-tab-panel]").forEach((panel) => {
-        panel.hidden = panel.getAttribute("data-tab-panel") !== targetName;
-      });
-    });
-  });
-  /* =======================================================
-     5. CHARGEMENT DES DONNÉES (backend Code.gs, action=getData)
-     ======================================================= */
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxD8Hf1muql7BF0qiDMlpfV038afKdIco3dIsVNwGLgyg8Ct-DoEM4fhK1ItlDg30zd/exec";
-  const TAILLE_PAGE = 12; // Affichage 12 par 12, exigé par le CDC
-
-  // Données brutes reçues une seule fois au chargement, jamais re-fetchées
-  // lors du filtrage (qui doit rester exclusivement local, cf. CDC).
-  let toutesLesRessources = [];
-  let referentielStructure = [];
-  let referentielTypes = [];
-  let referentielLangues = [];
-
-  // Pour l'instant (avant le bloc filtres), la liste affichée = liste complète.
-  let ressourcesAffichees = [];
-  let nombreCartesVisibles = 0;
-
-  const grille = document.getElementById("card-grid");
-  const compteurResultats = document.getElementById("result-count-number");
-  const boutonAfficherPlus = document.getElementById("btn-load-more");
-
-  function chargerDonnees() {
-    fetch(APPS_SCRIPT_URL + "?action=getData")
-      .then(function (reponse) { return reponse.json(); })
-      .then(function (donnees) {
-        if (donnees.erreur) throw new Error(donnees.erreur);
-
-        toutesLesRessources = donnees.ressources || [];
-        referentielStructure = donnees.structure || [];
-        referentielTypes = donnees.types || [];
-        referentielLangues = donnees.langues || [];
-
-        ressourcesAffichees = toutesLesRessources; // sans filtre pour l'instant
-        nombreCartesVisibles = 0;
-        afficherLotSuivant();
-      })
-      .catch(function (erreur) {
-        grille.innerHTML =
-          '<p class="card-grid__etat">Impossible de charger les ressources (' + erreur.message + ').</p>';
-      });
+  .site-header__inner {
+    flex-direction: column;
+    align-items: flex-start;
   }
-
-  /**
-   * Affiche le lot de cartes suivant (12 de plus), sans redessiner celles
-   * déjà affichées — évite un clignotement visuel au clic sur "Afficher plus".
-   */
-  function afficherLotSuivant() {
-    if (nombreCartesVisibles === 0) {
-      grille.innerHTML = ""; // on retire le message "Chargement…"
-    }
-
-    if (ressourcesAffichees.length === 0) {
-      grille.innerHTML = '<p class="card-grid__etat" data-fr="Aucune ressource ne correspond à ces critères." ' +
-        'data-en="No resource matches these criteria.">Aucune ressource ne correspond à ces critères.</p>';
-      boutonAfficherPlus.hidden = true;
-      compteurResultats.textContent = "0";
-      return;
-    }
-
-    const prochainLot = ressourcesAffichees.slice(nombreCartesVisibles, nombreCartesVisibles + TAILLE_PAGE);
-    prochainLot.forEach(function (ressource) {
-      grille.appendChild(construireCarteRessource_(ressource));
-    });
-
-    nombreCartesVisibles += prochainLot.length;
-    compteurResultats.textContent = String(ressourcesAffichees.length);
-    boutonAfficherPlus.hidden = nombreCartesVisibles >= ressourcesAffichees.length;
-
-    // Applique immédiatement la langue courante aux nouvelles cartes
-    // (titres/labels bilingues des nouveaux éléments injectés).
-    appliquerLangueSurElement_(grille);
-  }
-
-  boutonAfficherPlus.addEventListener("click", afficherLotSuivant);
-
-  /**
-   * Découpe une valeur "colonne multi-valeurs" (séparée par des virgules
-   * dans le Google Sheet) en tableau de chaînes propres.
-   */
-  function decouperListe_(valeur) {
-    return String(valeur || "")
-      .split(",")
-      .map(function (item) { return item.trim(); })
-      .filter(Boolean);
-  }
-
-  /**
-   * Détermine la classe CSS de couleur (Annexe 2) à partir d'un intitulé
-   * de niveau tel que "S3 SCI", "S6 bio 4", "S7 bio 4" ou "STS".
-   */
-  function classeNiveau_(niveau) {
-    const texte = String(niveau || "").trim().toLowerCase();
-    if (texte === "sts") return "bg-niveau-sts";
-    const correspondance = texte.match(/^s([1-7])\b/);
-    return correspondance ? "bg-niveau-s" + correspondance[1] : "bg-niveau-all";
-  }
-
-  /**
-   * Retrouve la ligne du référentiel "structure" correspondant à un thème
-   * donné. Les noms de thème sont uniques dans tout le référentiel (confirmé
-   * par l'utilisatrice) : une simple correspondance par nom suffit, pas besoin
-   * de croiser avec le niveau de la ressource.
-   */
-  function trouverLigneStructure_(theme) {
-    const themeCible = theme.trim().toLowerCase();
-    return referentielStructure.find(function (ligne) {
-      return String(ligne.theme).trim().toLowerCase() === themeCible;
-    });
-  }
-
-  /**
-   * Construit l'élément DOM d'une carte-ressource à partir d'une ligne
-   * de données brute renvoyée par le backend.
-   */
-  function construireCarteRessource_(ressource) {
-    const themes = decouperListe_(ressource.theme);
-
-    const carte = document.createElement("article");
-    carte.className = "card";
-
-    // --- Image (avec repli automatique sur l'image par défaut) ---
-    const imageWrap = document.createElement("div");
-    imageWrap.className = "card__image-wrap";
-    const image = document.createElement("img");
-    image.className = "card__image";
-    image.loading = "lazy";
-    image.alt = "";
-    image.src = ressource.image || "default-image.jpg";
-    image.onerror = function () {
-      image.onerror = null;
-      image.src = "default-image.jpg";
-    };
-    imageWrap.appendChild(image);
-    carte.appendChild(imageWrap);
-
-    // --- Corps de la carte ---
-    const corps = document.createElement("div");
-    corps.className = "card__body";
-
-    const titre = document.createElement("h2");
-    titre.className = "card__title";
-    titre.textContent = ressource.titre || "";
-    corps.appendChild(titre);
-
-    // --- Badges ---
-    const badges = document.createElement("div");
-    badges.className = "card__badges";
-
-    // Badge 1 : un par thème, icône seule, couleur = niveau associé (CDC)
-    themes.forEach(function (theme) {
-      const ligneStructure = trouverLigneStructure_(theme);
-      if (!ligneStructure) {
-        console.warn('Aucune ligne "structure" ne correspond exactement au thème : "' + theme + '" (ressource : "' + ressource.titre + '")');
-      } else if (!ligneStructure.icone) {
-        console.warn('Le thème "' + theme + '" existe dans "structure" mais sa colonne icone est vide.');
-      }
-      const icone = ligneStructure ? ligneStructure.icone : "default-icon";
-      const classeCouleur = ligneStructure ? classeNiveau_(ligneStructure.niveau) : "bg-niveau-all";
-
-      const badge = document.createElement("span");
-      badge.className = "badge badge--niveau " + classeCouleur;
-      badge.title = ligneStructure ? (ligneStructure.niveau + " - " + theme) : theme;
-      badge.innerHTML = '<svg class="badge-icone" width="16" height="16" aria-hidden="true">' +
-        '<use href="#' + icone + '"></use></svg>';
-      badges.appendChild(badge);
-    });
-
-    // Badge 2 : type(s) de document (texte selon la langue active) — une
-    // ressource peut avoir plusieurs types (ex : texte ET dessin humoristique).
-    const typesFr = decouperListe_(ressource.type_fr);
-    const typesEn = decouperListe_(ressource.type_en);
-    typesFr.forEach(function (typeFr, index) {
-      const typeEn = typesEn[index] || typeFr;
-      const badgeType = document.createElement("span");
-      badgeType.className = "badge badge--type";
-      badgeType.setAttribute("data-fr", typeFr);
-      badgeType.setAttribute("data-en", typeEn);
-      badgeType.textContent = htmlEl.getAttribute("data-lang") === "EN" ? typeEn : typeFr;
-      badges.appendChild(badgeType);
-    });
-
-    // Badge 3 : langue(s) (abréviation brute, ex: FR, EN, NL) — une ressource
-    // peut être bilingue.
-    decouperListe_(ressource.langue).forEach(function (langue) {
-      const badgeLangue = document.createElement("span");
-      badgeLangue.className = "badge badge--langue";
-      badgeLangue.textContent = langue;
-      badges.appendChild(badgeLangue);
-    });
-
-    corps.appendChild(badges);
-
-    // --- Métadonnées (proposé par — établissement) ---
-    const meta = document.createElement("p");
-    meta.className = "card__meta";
-    meta.textContent = [ressource.propose_par, ressource.etablissement].filter(Boolean).join(" — ");
-    corps.appendChild(meta);
-
-    // --- Bouton "Signaler un problème" (délégation déjà branchée au §2) ---
-    const boutonSignaler = document.createElement("button");
-    boutonSignaler.type = "button";
-    boutonSignaler.className = "card__report-btn btn-open-report";
-    boutonSignaler.setAttribute("data-fr", "Signaler un problème");
-    boutonSignaler.setAttribute("data-en", "Report a problem");
-    boutonSignaler.textContent = htmlEl.getAttribute("data-lang") === "EN" ? "Report a problem" : "Signaler un problème";
-    corps.appendChild(boutonSignaler);
-
-    // Lien cliquable vers la ressource elle-même (sur l'image et le titre)
-    if (ressource.url) {
-      imageWrap.style.cursor = "pointer";
-      titre.style.cursor = "pointer";
-      const ouvrirRessource = function () { window.open(ressource.url, "_blank", "noopener"); };
-      imageWrap.addEventListener("click", ouvrirRessource);
-      titre.addEventListener("click", ouvrirRessource);
-    }
-
-    carte.appendChild(corps);
-    return carte;
-  }
-
-  /**
-   * Ré-applique la traduction FR/EN sur un sous-arbre du DOM (utilisé après
-   * l'injection de nouvelles cartes, qui portent aussi des attributs
-   * data-fr/data-en pour le badge type et le bouton signaler).
-   */
-  function appliquerLangueSurElement_(racine) {
-    const lang = htmlEl.getAttribute("data-lang") === "EN" ? "EN" : "FR";
-    racine.querySelectorAll("[data-fr][data-en]").forEach(function (el) {
-      el.textContent = lang === "EN" ? el.dataset.en : el.dataset.fr;
-    });
-  }
-
-  chargerDonnees();
-})();
+}
