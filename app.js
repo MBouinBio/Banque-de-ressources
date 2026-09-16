@@ -854,7 +854,7 @@
   // ATTENTION : à remplacer par la vraie valeur de la propriété de script
   // "API_SECRET_TOKEN" côté Apps Script. Visible dans le code source client
   // (limite structurelle déjà actée dans "Limites acceptées").
-  const TOKEN_FRONTEND = "REMPLACE_PAR_TON_TOKEN";
+  const TOKEN_FRONTEND = "Banque123Ressource456";
   const ORIGIN_DECLARE = window.location.origin;
 
   const gabaritFormulaire = document.getElementById("gabarit-formulaire-ressource");
