@@ -1078,6 +1078,16 @@
       etablissement: lireChamp("etablissement")
     };
 
+    // "topic" (traduction anglaise du thème) n'est jamais saisi directement :
+    // il est déduit du référentiel structure, thème par thème, pour rester
+    // toujours synchronisé avec "theme" (même ordre, même nombre).
+    donnees.topic = donnees.theme.map(function (theme) {
+      const ligne = referentielStructure.find(function (l) {
+        return normaliserAccentsClient_(l.theme) === normaliserAccentsClient_(theme);
+      });
+      return ligne ? ligne.topic : "";
+    });
+
     // Option "Autre" : ajoute un type supplémentaire hors référentiel.
     if (form.querySelector('[data-role="type-autre-active"]').checked) {
       const typeAutreFr = form.querySelector('[data-role="type-autre-fr"]').value.trim();
