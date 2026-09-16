@@ -483,6 +483,10 @@
               data-fr="Analyse IA par URL" data-en="AI analysis by URL">
         Analyse IA par URL
       </button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-tab="import"
+              data-fr="Import externe" data-en="External import">
+        Import externe
+      </button>
       <button type="button" class="tab" role="tab" aria-selected="false" data-tab="manuel"
               data-fr="Ajout manuel" data-en="Manual entry">
         Ajout manuel
@@ -517,10 +521,54 @@
           Je pense que c'est pertinent, continuer manuellement
         </button>
       </div>
-
-      <!-- Étape 4 : formulaire de relecture, pré-rempli par l'IA -->
-      <form id="form-ia" hidden></form>
     </div>
+
+    <div class="tab-panel" data-tab-panel="import" hidden>
+      <div class="form-group">
+        <p data-fr="Générez le prompt à coller dans l'IA de votre choix (ChatGPT, Claude, Mistral, Gemini…) — le référentiel actuel (thèmes, niveaux, types) y est intégré automatiquement."
+           data-en="Generate the prompt to paste into the AI of your choice (ChatGPT, Claude, Mistral, Gemini…) — the current referential (themes, levels, types) is automatically included.">
+          Générez le prompt à coller dans l'IA de votre choix (ChatGPT, Claude, Mistral, Gemini…) — le référentiel actuel (thèmes, niveaux, types) y est intégré automatiquement.
+        </p>
+        <button type="button" class="btn btn--primary" id="btn-generer-prompt"
+                data-fr="Générer le prompt" data-en="Generate prompt">Générer le prompt</button>
+      </div>
+
+      <div class="form-group" id="zone-prompt-genere" hidden>
+        <label data-fr="Prompt à copier" data-en="Prompt to copy">Prompt à copier</label>
+        <textarea id="texte-prompt-genere" class="filter-input" rows="8" readonly></textarea>
+        <button type="button" class="btn btn--ghost" id="btn-copier-prompt"
+                data-fr="Copier" data-en="Copy">Copier</button>
+        <p class="form-alerte" id="prompt-copie-confirmation" hidden
+           data-fr="Copié dans le presse-papier." data-en="Copied to clipboard.">
+          Copié dans le presse-papier.
+        </p>
+      </div>
+
+      <hr>
+
+      <div class="form-group">
+        <label for="import-url" data-fr="URL de la ressource" data-en="Resource URL">URL de la ressource</label>
+        <input type="url" id="import-url" class="filter-input" placeholder="https://…">
+      </div>
+
+      <div class="form-group">
+        <label for="import-json-texte" data-fr="Collez ici le JSON renvoyé par votre IA"
+               data-en="Paste the JSON returned by your AI here">
+          Collez ici le JSON renvoyé par votre IA
+        </label>
+        <textarea id="import-json-texte" class="filter-input" rows="8"
+                  placeholder='{"est_pertinent": true, ...}'></textarea>
+      </div>
+
+      <button type="button" class="btn btn--secondary" id="btn-charger-import"
+              data-fr="Charger" data-en="Load">Charger</button>
+      <p class="form-erreur" id="import-erreur" hidden></p>
+    </div>
+
+    <!-- Formulaire de relecture, partagé entre l'onglet "Analyse IA" et
+         l'onglet "Import externe" — n'appartient à aucun des deux panneaux,
+         pour ne pas disparaître si l'utilisateur revient sur l'autre onglet. -->
+    <form id="form-ia" hidden></form>
 
     <div class="tab-panel" data-tab-panel="manuel" hidden>
       <form id="form-manuel"></form>
