@@ -1196,6 +1196,68 @@
       });
   });
 
+  /**
+   * Normalise une chaîne pour comparaison robuste (accents, apostrophes,
+   * casse) — équivalent client de normaliserAccents_ côté serveur.
+   */
+  function normaliserAccentsClient_(texte) {
+    return String(texte || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/['\u2019\u02BC]/g, "'")
+      .trim()
+      .toLowerCase();
+  }
+
+  /**
+   * Recalcule les indicateurs niveau_reconnu/theme_reconnu/type_reconnu/
+   * langue_reconnue pour un résultat importé d'une IA externe, en comparant
+   * chaque valeur au référentiel déjà chargé en mémoire — même logique que
+   * la validation serveur de analyzeUrl, réécrite côté client puisque ce
+   * résultat n'est jamais passé par notre backend. Convertit aussi la
+   * langue (nom complet) en abréviation, et corrige la casse des types
+   * reconnus vers leur orthographe canonique.
+   */
+  function validerImportExterne_(resultat) {
+    const niveauxConnus = referentielStructure.map(function (l) { return normaliserAccentsClient_(l.niveau); });
+    const niveauxProposes = Array.isArray(resultat.niveau) ? resultat.niveau : [];
+    resultat.niveau_reconnu = niveauxProposes.length > 0 && niveauxProposes.every(function (n) {
+      return niveauxConnus.indexOf(normaliserAccentsClient_(n)) !== -1;
+    });
+
+    const themesConnus = referentielStructure.map(function (l) { return normaliserAccentsClient_(l.theme); });
+    const themesProposes = Array.isArray(resultat.theme) ? resultat.theme : [];
+    resultat.theme_reconnu = themesProposes.length > 0 && themesProposes.every(function (t) {
+      return themesConnus.indexOf(normaliserAccentsClient_(t)) !== -1;
+    });
+
+    const typesProposes = Array.isArray(resultat.type_fr) ? resultat.type_fr : [];
+    const typeFrCorrige = [];
+    let tousTypesReconnus = typesProposes.length > 0;
+    typesProposes.forEach(function (t) {
+      const cible = normaliserAccentsClient_(t);
+      const trouve = referentielTypes.find(function (l) { return normaliserAccentsClient_(l.FR) === cible; });
+      typeFrCorrige.push(trouve ? trouve.FR : t);
+      if (!trouve) tousTypesReconnus = false;
+    });
+    resultat.type_fr = typeFrCorrige;
+    resultat.type_reconnu = tousTypesReconnus;
+
+    const languesProposees = Array.isArray(resultat.langue) ? resultat.langue : [];
+    const abreviationsCorrigees = [];
+    let toutesLanguesReconnues = languesProposees.length > 0;
+    languesProposees.forEach(function (langue) {
+      const cible = normaliserAccentsClient_(langue);
+      const trouve = referentielLangues.find(function (l) { return normaliserAccentsClient_(l.langues) === cible; });
+      abreviationsCorrigees.push(trouve ? trouve.abreviation_langue : langue);
+      if (!trouve) toutesLanguesReconnues = false;
+    });
+    resultat.langue = abreviationsCorrigees;
+    resultat.langue_reconnue = toutesLanguesReconnues;
+
+    return resultat;
+  }
+
   // --- Onglet "Import externe" ---
 
   document.getElementById("btn-generer-prompt").addEventListener("click", function () {
@@ -1260,14 +1322,10 @@
       return;
     }
 
-    // Un résultat externe n'a pas les indicateurs _reconnu (calculés par
-    // notre propre backend, absents du JSON produit par une IA tierce) : on
-    // les traite comme "non vérifiés" plutôt que comme "reconnus", pour que
-    // la relecture manuelle reste systématique sur ces champs.
-    resultat.type_reconnu = false;
-    resultat.niveau_reconnu = false;
-    resultat.theme_reconnu = false;
-    resultat.langue_reconnue = false;
+    // Un résultat externe n'a pas les indicateurs _reconnu (calculés côté
+    // serveur pour analyzeUrl, absents du JSON produit par une IA tierce) :
+    // on les recalcule nous-mêmes, ici, contre le référentiel déjà chargé.
+    resultat = validerImportExterne_(resultat);
 
     if (resultat.est_pertinent === false) {
       erreurEl.textContent = langueCourante_() === "EN"
