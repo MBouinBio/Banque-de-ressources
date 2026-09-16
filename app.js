@@ -1204,7 +1204,9 @@
     const zoneTexte = document.getElementById("texte-prompt-genere");
 
     bouton.disabled = true;
-    fetch(APPS_SCRIPT_URL + "?action=genererPromptExterne")
+    const urlSaisie = document.getElementById("import-url").value.trim();
+    const params = urlSaisie ? "&url=" + encodeURIComponent(urlSaisie) : "";
+    fetch(APPS_SCRIPT_URL + "?action=genererPromptExterne" + params)
       .then(function (reponse) { return reponse.json(); })
       .then(function (resultat) {
         bouton.disabled = false;
