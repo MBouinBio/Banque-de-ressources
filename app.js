@@ -195,6 +195,11 @@
       document.querySelectorAll("[data-tab-panel]").forEach((panel) => {
         panel.hidden = panel.getAttribute("data-tab-panel") !== targetName;
       });
+
+      // form-ia est partagé entre les onglets "ia" et "import" mais vit hors
+      // des panneaux : on le masque à chaque changement d'onglet, les deux
+      // flux (Analyser / Charger) le réafficheront eux-mêmes le moment venu.
+      document.getElementById("form-ia").hidden = true;
     });
   });
   /* =======================================================
@@ -854,7 +859,7 @@
   // ATTENTION : à remplacer par la vraie valeur de la propriété de script
   // "API_SECRET_TOKEN" côté Apps Script. Visible dans le code source client
   // (limite structurelle déjà actée dans "Limites acceptées").
-  const TOKEN_FRONTEND = "Banque123Ressource456";
+  const TOKEN_FRONTEND = "REMPLACE_PAR_TON_TOKEN";
   const ORIGIN_DECLARE = window.location.origin;
 
   const gabaritFormulaire = document.getElementById("gabarit-formulaire-ressource");
@@ -1191,6 +1196,89 @@
       });
   });
 
+  // --- Onglet "Import externe" ---
+
+  document.getElementById("btn-generer-prompt").addEventListener("click", function () {
+    const bouton = document.getElementById("btn-generer-prompt");
+    const zone = document.getElementById("zone-prompt-genere");
+    const zoneTexte = document.getElementById("texte-prompt-genere");
+
+    bouton.disabled = true;
+    fetch(APPS_SCRIPT_URL + "?action=genererPromptExterne")
+      .then(function (reponse) { return reponse.json(); })
+      .then(function (resultat) {
+        bouton.disabled = false;
+        if (resultat.erreur) {
+          zoneTexte.value = "";
+          zone.hidden = true;
+          return;
+        }
+        zoneTexte.value = resultat.prompt;
+        zone.hidden = false;
+      })
+      .catch(function () {
+        bouton.disabled = false;
+      });
+  });
+
+  document.getElementById("btn-copier-prompt").addEventListener("click", function () {
+    const zoneTexte = document.getElementById("texte-prompt-genere");
+    const confirmation = document.getElementById("prompt-copie-confirmation");
+    navigator.clipboard.writeText(zoneTexte.value).then(function () {
+      confirmation.hidden = false;
+      setTimeout(function () { confirmation.hidden = true; }, 3000);
+    });
+  });
+
+  document.getElementById("btn-charger-import").addEventListener("click", function () {
+    const url = document.getElementById("import-url").value.trim();
+    const texteJson = document.getElementById("import-json-texte").value.trim();
+    const erreurEl = document.getElementById("import-erreur");
+    erreurEl.hidden = true;
+
+    if (!url) {
+      erreurEl.textContent = langueCourante_() === "EN" ? "Please enter a URL." : "Merci de saisir une URL.";
+      erreurEl.hidden = false;
+      return;
+    }
+    if (!texteJson) {
+      erreurEl.textContent = langueCourante_() === "EN" ? "Please paste the JSON." : "Merci de coller le JSON.";
+      erreurEl.hidden = false;
+      return;
+    }
+
+    let resultat;
+    try {
+      resultat = JSON.parse(texteJson);
+    } catch (erreurParsing) {
+      erreurEl.textContent = langueCourante_() === "EN"
+        ? "This text is not valid JSON. Copy exactly what the AI returned, nothing else."
+        : "Ce texte n'est pas du JSON valide. Copiez exactement ce que l'IA a renvoyé, rien d'autre.";
+      erreurEl.hidden = false;
+      return;
+    }
+
+    // Un résultat externe n'a pas les indicateurs _reconnu (calculés par
+    // notre propre backend, absents du JSON produit par une IA tierce) : on
+    // les traite comme "non vérifiés" plutôt que comme "reconnus", pour que
+    // la relecture manuelle reste systématique sur ces champs.
+    resultat.type_reconnu = false;
+    resultat.niveau_reconnu = false;
+    resultat.theme_reconnu = false;
+    resultat.langue_reconnue = false;
+
+    if (resultat.est_pertinent === false) {
+      erreurEl.textContent = langueCourante_() === "EN"
+        ? "This AI judged the resource not relevant: " + (resultat.motif_rejet_en || "")
+        : "Cette IA a jugé la ressource non pertinente : " + (resultat.motif_rejet_fr || "");
+      erreurEl.hidden = false;
+      // On affiche quand même le formulaire, au cas où l'enseignant ne soit pas d'accord.
+    }
+
+    formIA.hidden = false;
+    preRemplirFormulaireIA_(resultat, url, true);
+  });
+
   /**
    * Remet la modale d'ajout à son état initial (étape URL de l'onglet IA,
    * formulaires vidés) à chaque ouverture — appelé depuis la section 2.
@@ -1201,6 +1289,13 @@
     document.getElementById("ia-etape-url").hidden = false;
     document.getElementById("ia-chargement").hidden = true;
     document.getElementById("ia-rejet").hidden = true;
+
+    document.getElementById("import-url").value = "";
+    document.getElementById("import-json-texte").value = "";
+    document.getElementById("import-erreur").hidden = true;
+    document.getElementById("zone-prompt-genere").hidden = true;
+    document.getElementById("texte-prompt-genere").value = "";
+
     formIA.hidden = true;
     reinitialiserFormulaire_(formIA);
     reinitialiserFormulaire_(formManuel);
