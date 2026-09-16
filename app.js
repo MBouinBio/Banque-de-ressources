@@ -207,7 +207,9 @@
   const compteurResultats = document.getElementById("result-count-number");
   const boutonAfficherPlus = document.getElementById("btn-load-more");
 
-  function chargerDonnees() {
+  function chargerDonnees(tentative) {
+    tentative = tentative || 1;
+
     fetch(APPS_SCRIPT_URL + "?action=getData")
       .then(function (reponse) { return reponse.json(); })
       .then(function (donnees) {
@@ -226,6 +228,12 @@
         construireFormulaire_(formManuel);
       })
       .catch(function (erreur) {
+        // Aléa ponctuel côté infrastructure Google (réponse non-JSON, etc.) :
+        // on retente une fois en silence avant d'afficher une erreur visible.
+        if (tentative < 2) {
+          setTimeout(function () { chargerDonnees(tentative + 1); }, 1500);
+          return;
+        }
         grille.innerHTML =
           '<p class="card-grid__etat">Impossible de charger les ressources (' + erreur.message + ').</p>';
       });
@@ -846,7 +854,7 @@
   // ATTENTION : à remplacer par la vraie valeur de la propriété de script
   // "API_SECRET_TOKEN" côté Apps Script. Visible dans le code source client
   // (limite structurelle déjà actée dans "Limites acceptées").
-  const TOKEN_FRONTEND = "Banque123Ressource456";
+  const TOKEN_FRONTEND = "REMPLACE_PAR_TON_TOKEN";
   const ORIGIN_DECLARE = window.location.origin;
 
   const gabaritFormulaire = document.getElementById("gabarit-formulaire-ressource");
