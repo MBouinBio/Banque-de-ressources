@@ -239,8 +239,10 @@
           setTimeout(function () { chargerDonnees(tentative + 1); }, 1500);
           return;
         }
-        grille.innerHTML =
-          '<p class="card-grid__etat">Impossible de charger les ressources (' + erreur.message + ').</p>';
+        const message = langueCourante_() === "EN"
+          ? "Loading failed — this can occasionally happen with this demo version (free-tier infrastructure, limited capacity). Please refresh the page to try again."
+          : "Le chargement a échoué — cela arrive parfois avec cette version de démonstration (infrastructure gratuite, capacité limitée). Rafraîchissez la page pour réessayer.";
+        grille.innerHTML = '<p class="card-grid__etat">' + message + '</p>';
       });
   }
 
@@ -1130,8 +1132,8 @@
       body: JSON.stringify(donnees)
     });
 
-    succesEl.hidden = false;
-    reinitialiserFormulaire_(form);
+    closeModal(modalAddResource);
+    openModal(document.getElementById("modal-confirmation-ajout"));
   }
 
   /** Remet un formulaire à zéro (après envoi, ou à l'ouverture de la modale). */
@@ -1274,14 +1276,17 @@
     const bouton = document.getElementById("btn-generer-prompt");
     const zone = document.getElementById("zone-prompt-genere");
     const zoneTexte = document.getElementById("texte-prompt-genere");
+    const chargement = document.getElementById("prompt-chargement");
 
     bouton.disabled = true;
+    chargement.hidden = false;
     const urlSaisie = document.getElementById("import-url").value.trim();
     const params = urlSaisie ? "&url=" + encodeURIComponent(urlSaisie) : "";
     fetch(APPS_SCRIPT_URL + "?action=genererPromptExterne" + params)
       .then(function (reponse) { return reponse.json(); })
       .then(function (resultat) {
         bouton.disabled = false;
+        chargement.hidden = true;
         if (resultat.erreur) {
           zoneTexte.value = "";
           zone.hidden = true;
@@ -1292,6 +1297,7 @@
       })
       .catch(function () {
         bouton.disabled = false;
+        chargement.hidden = true;
       });
   });
 
@@ -1309,6 +1315,7 @@
     const texteJson = document.getElementById("import-json-texte").value.trim();
     const erreurEl = document.getElementById("import-erreur");
     erreurEl.hidden = true;
+    document.getElementById("import-succes").hidden = true;
 
     if (!url) {
       erreurEl.textContent = langueCourante_() === "EN" ? "Please enter a URL." : "Merci de saisir une URL.";
@@ -1347,6 +1354,12 @@
 
     formIA.hidden = false;
     preRemplirFormulaireIA_(resultat, url, true);
+
+    if (resultat.est_pertinent !== false) {
+      const succesEl = document.getElementById("import-succes");
+      succesEl.hidden = false;
+    }
+    formIA.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   /**
@@ -1363,13 +1376,43 @@
     document.getElementById("import-url").value = "";
     document.getElementById("import-json-texte").value = "";
     document.getElementById("import-erreur").hidden = true;
+    document.getElementById("import-succes").hidden = true;
+    document.getElementById("prompt-chargement").hidden = true;
     document.getElementById("zone-prompt-genere").hidden = true;
     document.getElementById("texte-prompt-genere").value = "";
+
+    // Remet l'onglet actif sur "Analyse IA par URL" (premier onglet), pour
+    // que "revenir à la version de départ" soit vrai aussi pour les onglets.
+    document.querySelectorAll(".tab").forEach(function (tab) {
+      const estIA = tab.dataset.tab === "ia";
+      tab.classList.toggle("tab--active", estIA);
+      tab.setAttribute("aria-selected", String(estIA));
+    });
+    document.querySelectorAll("[data-tab-panel]").forEach(function (panel) {
+      panel.hidden = panel.getAttribute("data-tab-panel") !== "ia";
+    });
 
     formIA.hidden = true;
     reinitialiserFormulaire_(formIA);
     reinitialiserFormulaire_(formManuel);
+
+    // Le texte explicatif des 3 méthodes réapparaît à chaque ouverture,
+    // et disparaît dès la première interaction de l'utilisateur dans la modale.
+    document.getElementById("modal-add-explication").hidden = false;
+    const masquerExplication = function () {
+      document.getElementById("modal-add-explication").hidden = true;
+    };
+    modalAddResource.addEventListener("click", masquerExplication, { once: true });
+    modalAddResource.addEventListener("input", masquerExplication, { once: true });
   }
+
+  // Clic sur "OK" de la modale de confirmation : ferme la confirmation et
+  // ré-ouvre la modale d'ajout, remise à son état initial.
+  document.getElementById("btn-confirmation-ajout-ok").addEventListener("click", function () {
+    closeModal(document.getElementById("modal-confirmation-ajout"));
+    reinitialiserModaleAjout_();
+    openModal(modalAddResource);
+  });
 
   chargerDonnees();
 })();
