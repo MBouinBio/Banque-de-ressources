@@ -468,6 +468,25 @@
 </div>
 
 <!-- ========================================================= -->
+<!-- MODALE : CONFIRMATION D'ENREGISTREMENT D'UNE RESSOURCE     -->
+<!-- ========================================================= -->
+<div class="modal-overlay" id="modal-confirmation-ajout" hidden>
+  <div class="modal modal--small" role="dialog" aria-modal="true" aria-labelledby="modal-confirmation-ajout-title">
+    <h2 id="modal-confirmation-ajout-title" data-fr="Ressource enregistrée !" data-en="Resource saved!">
+      Ressource enregistrée !
+    </h2>
+    <p data-fr="Elle sera visible après validation par un modérateur."
+       data-en="It will be visible after moderator validation.">
+      Elle sera visible après validation par un modérateur.
+    </p>
+    <div class="modal__actions">
+      <button type="button" class="btn btn--primary" id="btn-confirmation-ajout-ok"
+              data-fr="OK" data-en="OK">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================= -->
 <!-- MODALE : PROPOSER UNE RESSOURCE (structure, à compléter)    -->
 <!-- ========================================================= -->
 <div class="modal-overlay" id="modal-add-resource" hidden>
@@ -491,6 +510,31 @@
               data-fr="Ajout manuel" data-en="Manual entry">
         Ajout manuel
       </button>
+    </div>
+
+    <div class="modal-explication" id="modal-add-explication">
+      <p class="modal-explication__titre" data-fr="Trois façons d'ajouter une ressource :"
+         data-en="Three ways to add a resource:">
+        Trois façons d'ajouter une ressource :
+      </p>
+      <ol>
+        <li data-fr="Analyse automatique — collez l'URL, l'IA du site remplit le reste. Peut être occasionnellement indisponible (quota limité de cette version de démonstration)."
+            data-en="Automatic analysis — paste the URL, the site's AI fills in the rest. May occasionally be unavailable (limited quota in this demo version).">
+          Analyse automatique — collez l'URL, l'IA du site remplit le reste. Peut être occasionnellement indisponible (quota limité de cette version de démonstration).
+        </li>
+        <li data-fr="Import externe — utilisez l'IA de votre choix avec le prompt fourni, puis collez son résultat. Quelques étapes de plus, mais sans limite."
+            data-en="External import — use the AI of your choice with the provided prompt, then paste its result. A few more steps, but no limit.">
+          Import externe — utilisez l'IA de votre choix avec le prompt fourni, puis collez son résultat. Quelques étapes de plus, mais sans limite.
+        </li>
+        <li data-fr="Saisie manuelle — remplissez le formulaire vous-même, sans IA."
+            data-en="Manual entry — fill in the form yourself, without AI.">
+          Saisie manuelle — remplissez le formulaire vous-même, sans IA.
+        </li>
+      </ol>
+      <p data-fr="Dans tous les cas, vous gardez le contrôle : chaque champ reste modifiable avant l'enregistrement."
+         data-en="In every case, you stay in control: every field remains editable before saving.">
+        Dans tous les cas, vous gardez le contrôle : chaque champ reste modifiable avant l'enregistrement.
+      </p>
     </div>
 
     <div class="tab-panel" data-tab-panel="ia">
@@ -531,6 +575,10 @@
         </p>
         <button type="button" class="btn btn--primary" id="btn-generer-prompt"
                 data-fr="Générer le prompt" data-en="Generate prompt">Générer le prompt</button>
+        <p id="prompt-chargement" hidden data-fr="Génération en cours… (quelques secondes)"
+           data-en="Generating… (a few seconds)">
+          Génération en cours… (quelques secondes)
+        </p>
       </div>
 
       <div class="form-group" id="zone-prompt-genere" hidden>
@@ -563,6 +611,10 @@
       <button type="button" class="btn btn--secondary" id="btn-charger-import"
               data-fr="Charger" data-en="Load">Charger</button>
       <p class="form-erreur" id="import-erreur" hidden></p>
+      <p class="form-succes" id="import-succes" hidden
+         data-fr="Résultat chargé, vérifiez les champs ci-dessous." data-en="Result loaded, please review the fields below.">
+        Résultat chargé, vérifiez les champs ci-dessous.
+      </p>
     </div>
 
     <!-- Formulaire de relecture, partagé entre l'onglet "Analyse IA" et
