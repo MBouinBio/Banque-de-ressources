@@ -341,7 +341,7 @@
 
       <!-- 3. Thème -->
       <div class="filter-group">
-        <span class="filter-group__label" data-fr="Thèmes" data-en="Topics">Thèmes</span>
+        <span class="filter-group__label" data-fr="Thème" data-en="Theme">Thème</span>
         <div class="chip-list" id="filter-theme" role="group" aria-label="Filtrer par thème">
           <!-- étiquettes de thème générées dynamiquement -->
         </div>
@@ -648,24 +648,17 @@
     <input type="url" class="filter-input" data-role="image" placeholder="https://…">
   </div>
 
-  <div class="form-group" data-champ="niveau">
-    <span class="filter-group__label" data-fr="Niveau" data-en="Level">Niveau</span>
-    <p class="form-alerte" data-role="niveau-alerte" hidden
-       data-fr="Niveau non reconnu par l'IA — sélectionnez manuellement."
-       data-en="Level not recognized by the AI — select manually.">
-      Niveau non reconnu par l'IA — sélectionnez manuellement.
-    </p>
-    <div class="checkbox-list" data-role="niveau"></div>
-  </div>
-
   <div class="form-group" data-champ="theme">
-    <span class="filter-group__label" data-fr="Thème" data-en="Theme">Thème</span>
+    <span class="filter-group__label" data-fr="Thème (le niveau est déduit automatiquement)"
+          data-en="Theme (the level is deduced automatically)">
+      Thème (le niveau est déduit automatiquement)
+    </span>
     <p class="form-alerte" data-role="theme-alerte" hidden
        data-fr="Thème non reconnu par l'IA — sélectionnez manuellement."
        data-en="Theme not recognized by the AI — select manually.">
       Thème non reconnu par l'IA — sélectionnez manuellement.
     </p>
-    <div class="chip-list" data-role="theme"></div>
+    <div data-role="theme"></div>
   </div>
 
   <div class="form-group" data-champ="type">
