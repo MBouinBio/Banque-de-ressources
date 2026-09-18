@@ -875,7 +875,7 @@
   // ATTENTION : à remplacer par la vraie valeur de la propriété de script
   // "API_SECRET_TOKEN" côté Apps Script. Visible dans le code source client
   // (limite structurelle déjà actée dans "Limites acceptées").
-  const TOKEN_FRONTEND = "Banque123Ressource456";
+  const TOKEN_FRONTEND = "REMPLACE_PAR_TON_TOKEN";
   const ORIGIN_DECLARE = window.location.origin;
 
   const gabaritFormulaire = document.getElementById("gabarit-formulaire-ressource");
@@ -893,36 +893,51 @@
     form.__motsCles = [];
     form.__keywords = [];
 
-    // Niveau (cases à cocher, toutes indépendantes)
-    const conteneurNiveau = form.querySelector('[data-role="niveau"]');
+    // Thème, regroupé visuellement par niveau (un sous-bloc titré par niveau,
+    // ses thèmes juste en dessous). Le niveau n'est plus une saisie directe :
+    // il sera déduit des thèmes cochés au moment de la soumission
+    // (lireFormulaire_), ce qui rend une incohérence niveau/thème
+    // structurellement impossible plutôt que de la détecter après coup.
+    const conteneurTheme = form.querySelector('[data-role="theme"]');
     const niveauxUniques = [];
     referentielStructure.forEach(function (l) {
       const n = String(l.niveau || "").trim();
       if (n && niveauxUniques.indexOf(n) === -1) niveauxUniques.push(n);
     });
-    niveauxUniques.forEach(function (n) {
-      conteneurNiveau.appendChild(construireCaseACocher_(n, n, function () {}));
-    });
 
-    // Thème (étiquettes cliquables, indépendantes les unes des autres —
-    // contrairement au filtre, il n'y a pas de logique ET/OU ici, juste
-    // une sélection multiple libre pour décrire la ressource).
-    const conteneurTheme = form.querySelector('[data-role="theme"]');
-    referentielStructure.forEach(function (ligne) {
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "chip " + classeNiveau_(ligne.niveau);
-      chip.setAttribute("aria-pressed", "false");
-      chip.dataset.theme = ligne.theme;
-      const icone = ligne.icone || "default-icon";
-      chip.innerHTML =
-        '<svg width="14" height="14" aria-hidden="true"><use href="#' + icone + '"></use></svg>' +
-        '<span data-fr="' + ligne.theme + '" data-en="' + (ligne.topic || ligne.theme) + '">' +
-        (langueCourante_() === "EN" ? (ligne.topic || ligne.theme) : ligne.theme) + '</span>';
-      chip.addEventListener("click", function () {
-        chip.setAttribute("aria-pressed", chip.getAttribute("aria-pressed") === "true" ? "false" : "true");
-      });
-      conteneurTheme.appendChild(chip);
+    niveauxUniques.forEach(function (niveau) {
+      const groupe = document.createElement("div");
+      groupe.className = "niveau-groupe";
+
+      const titre = document.createElement("p");
+      titre.className = "niveau-groupe__titre";
+      titre.textContent = niveau;
+      groupe.appendChild(titre);
+
+      const listeChips = document.createElement("div");
+      listeChips.className = "chip-list";
+
+      referentielStructure
+        .filter(function (ligne) { return String(ligne.niveau || "").trim() === niveau; })
+        .forEach(function (ligne) {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "chip " + classeNiveau_(ligne.niveau);
+          chip.setAttribute("aria-pressed", "false");
+          chip.dataset.theme = ligne.theme;
+          const icone = ligne.icone || "default-icon";
+          chip.innerHTML =
+            '<svg width="14" height="14" aria-hidden="true"><use href="#' + icone + '"></use></svg>' +
+            '<span data-fr="' + ligne.theme + '" data-en="' + (ligne.topic || ligne.theme) + '">' +
+            (langueCourante_() === "EN" ? (ligne.topic || ligne.theme) : ligne.theme) + '</span>';
+          chip.addEventListener("click", function () {
+            chip.setAttribute("aria-pressed", chip.getAttribute("aria-pressed") === "true" ? "false" : "true");
+          });
+          listeChips.appendChild(chip);
+        });
+
+      groupe.appendChild(listeChips);
+      conteneurTheme.appendChild(groupe);
     });
 
     // Type de contenu (cases à cocher) + option "Autre"
@@ -1043,14 +1058,12 @@
     formIA.querySelector('[data-role="image"]').value = resultat.image || "";
 
     if (classificationFiable) {
-      cocherSiReconnu_(formIA, "niveau", resultat.niveau, resultat.niveau_reconnu);
       cocherThemesSiReconnu_(formIA, resultat.theme, resultat.theme_reconnu);
       cocherSiReconnu_(formIA, "type", resultat.type_fr, resultat.type_reconnu);
       cocherSiReconnu_(formIA, "langue", resultat.langue, resultat.langue_reconnue);
       formIA.__motsCles = (resultat.mots_cles || []).slice();
       formIA.__keywords = (resultat.keywords || []).slice();
     } else {
-      cocherSiReconnu_(formIA, "niveau", [], false);
       cocherThemesSiReconnu_(formIA, [], false);
       cocherSiReconnu_(formIA, "type", [], false);
       cocherSiReconnu_(formIA, "langue", [], false);
@@ -1082,7 +1095,6 @@
       url: lireChamp("url"),
       titre: lireChamp("titre"),
       image: lireChamp("image"),
-      niveau: lireCoches("niveau"),
       theme: lireThemesCoches(),
       type_fr: lireCoches("type"),
       type_en: Array.from(form.querySelectorAll('[data-role="type"] input[type="checkbox"]:checked'))
@@ -1093,6 +1105,21 @@
       propose_par: lireChamp("propose-par"),
       etablissement: lireChamp("etablissement")
     };
+
+    // "niveau" n'est jamais saisi directement : il est déduit des thèmes
+    // cochés, via le référentiel structure (chaque thème n'appartient qu'à
+    // un seul niveau), pour rendre une incohérence niveau/thème
+    // structurellement impossible plutôt que de la détecter après coup.
+    donnees.niveau = [];
+    donnees.theme.forEach(function (theme) {
+      const ligne = referentielStructure.find(function (l) {
+        return normaliserAccentsClient_(l.theme) === normaliserAccentsClient_(theme);
+      });
+      if (ligne) {
+        const niveauDeduit = String(ligne.niveau || "").trim();
+        if (niveauDeduit && donnees.niveau.indexOf(niveauDeduit) === -1) donnees.niveau.push(niveauDeduit);
+      }
+    });
 
     // "topic" (traduction anglaise du thème) n'est jamais saisi directement :
     // il est déduit du référentiel structure, thème par thème, pour rester
