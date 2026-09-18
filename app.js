@@ -1,18 +1,32 @@
 /**
  * app.js
  *
- * Gère actuellement :
- *   1. Le switch de langue FR/EN (texte de l'interface + persistance URL ?lang=)
- *   2. L'ouverture/fermeture des modales (À propos, Signaler, Proposer une ressource)
- *   3. L'empilement de la sidebar sur mobile
- *   4. Les onglets de la modale "Proposer une ressource"
- *   5. Le chargement des données réelles (action=getData) et l'affichage
- *      des cartes-ressources, paginé 12 par 12 ("Afficher plus")
+ * Gère l'intégralité du frontend :
+ *   1. Switch de langue FR/EN (texte de l'interface, persistance URL ?lang=)
+ *   2. Modales (À propos, Signaler un problème, Proposer une ressource,
+ *      confirmation d'enregistrement) — ouverture/fermeture/réinitialisation
+ *   3. Sidebar mobile (empilement < 768px)
+ *   4. Onglets de la modale "Proposer une ressource"
+ *   5. Chargement des données réelles (action=getData) + affichage des
+ *      cartes-ressources, paginé 12 par 12 ("Afficher plus")
+ *   6. Les 8 filtres à facettes dynamiques généralisées : chaque filtre ne
+ *      propose que les options compatibles avec les 7 autres, recalculé à
+ *      chaque changement ; thème en logique ET, langue/mots-clés en OU ;
+ *      persistance de l'état des filtres dans l'URL
+ *   7. Modale "Proposer une ressource" à 3 chemins :
+ *      - Analyse IA par URL (appel à analyzeUrl, gestion du rejet IA)
+ *      - Import externe (génération d'un prompt à coller dans une IA au
+ *        choix de l'enseignant, collage du JSON obtenu, validation contre
+ *        le référentiel réalisée côté client puisque ce résultat n'a jamais
+ *        transité par notre backend)
+ *      - Ajout manuel (formulaire vide)
+ *      Les 3 chemins convergent vers un formulaire de relecture partagé
+ *      (form-ia) ou le formulaire manuel (form-manuel), avec saisie de
+ *      mots-clés en étiquettes et gestion des indicateurs *_reconnu.
  *
- * NE FAIT PAS ENCORE (prochaines étapes) :
- *   - la génération dynamique des 8 filtres et le filtrage réel des cartes
- *   - la persistance des filtres dans l'URL (seul ?lang= est géré ici)
- *   - la modale d'ajout (IA + manuel) connectée au backend
+ * Ce fichier suppose que TOKEN_FRONTEND (section 7) contient la vraie
+ * valeur de API_SECRET_TOKEN — sinon toute analyse IA et tout enregistrement
+ * échouent silencieusement (POST en no-cors, jamais d'erreur visible).
  */
 
 (function () {
@@ -1166,6 +1180,21 @@
     document.getElementById("ia-etape-url").hidden = true;
     document.getElementById("ia-chargement").hidden = false;
 
+    lancerAnalyseUrl_(url, 1);
+  });
+
+  /**
+   * Lance l'appel à analyzeUrl, avec un réessai automatique silencieux en
+   * cas d'échec réseau/parsing (aléa ponctuel de livraison côté Apps
+   * Script, même famille que celui déjà rencontré sur getData — l'exécution
+   * côté serveur peut très bien avoir réussi malgré cet échec de livraison).
+   * Les erreurs applicatives (token invalide, Gemini indisponible...) ne
+   * sont PAS réessayées ici : ce sont déjà de vraies réponses JSON, donc pas
+   * concernées par ce problème de livraison.
+   */
+  function lancerAnalyseUrl_(url, tentative) {
+    const erreurEl = document.getElementById("ia-erreur");
+
     const params = new URLSearchParams({
       action: "analyzeUrl",
       token: TOKEN_FRONTEND,
@@ -1201,12 +1230,16 @@
         preRemplirFormulaireIA_(resultat, url, true);
       })
       .catch(function (erreur) {
+        if (tentative < 2) {
+          setTimeout(function () { lancerAnalyseUrl_(url, tentative + 1); }, 1500);
+          return;
+        }
         document.getElementById("ia-chargement").hidden = true;
         document.getElementById("ia-etape-url").hidden = false;
         erreurEl.textContent = (langueCourante_() === "EN" ? "Network error: " : "Erreur réseau : ") + erreur.message;
         erreurEl.hidden = false;
       });
-  });
+  }
 
   /**
    * Normalise une chaîne pour comparaison robuste (accents, apostrophes,
