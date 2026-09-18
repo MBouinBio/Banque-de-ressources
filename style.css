@@ -496,6 +496,18 @@ body {
   color: var(--color-text-muted);
 }
 
+.niveau-groupe {
+  margin-bottom: 0.9rem;
+}
+.niveau-groupe__titre {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin: 0 0 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 /* =========================================================
    FORMULAIRE "PROPOSER UNE RESSOURCE" (IA + manuel)
    ========================================================= */
