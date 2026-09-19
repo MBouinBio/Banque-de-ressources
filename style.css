@@ -412,6 +412,11 @@ body {
 }
 .modal-overlay[hidden] { display: none; }
 
+/* Peut s'ouvrir par-dessus une autre modale déjà affichée (ex : depuis le
+   formulaire d'ajout de ressource) — doit donc passer au-dessus, quel que
+   soit son ordre dans le document. */
+#modal-apercu-image { z-index: 200; }
+
 .modal {
   background: var(--color-surface);
   border-radius: var(--radius-md);
