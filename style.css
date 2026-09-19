@@ -412,10 +412,29 @@ body {
 }
 .modal-overlay[hidden] { display: none; }
 
-/* Peut s'ouvrir par-dessus une autre modale déjà affichée (ex : depuis le
-   formulaire d'ajout de ressource) — doit donc passer au-dessus, quel que
-   soit son ordre dans le document. */
-#modal-apercu-image { z-index: 200; }
+.apercu-conteneur {
+  position: relative;
+  display: inline-block;
+  margin-top: 0.4rem;
+}
+.apercu-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.4rem;
+  z-index: 50;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem;
+  box-shadow: var(--shadow-card-hover);
+}
+.apercu-popup img {
+  display: block;
+  max-width: 220px;
+  max-height: 160px;
+  border-radius: 6px;
+}
 
 .modal {
   background: var(--color-surface);
