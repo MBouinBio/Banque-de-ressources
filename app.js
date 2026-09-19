@@ -964,16 +964,20 @@
     brancherTagInput_(form, "mots-cles", "__motsCles");
     brancherTagInput_(form, "keywords", "__keywords");
 
-    // Aperçu de l'image : ouvre la modale partagée avec l'URL actuellement saisie.
-    form.querySelector('[data-role="apercu-image"]').addEventListener("click", function () {
+    // Aperçu de l'image au survol (souris uniquement — pas d'équivalent
+    // tactile prévu, absence acceptée sur mobile/tablette pour l'instant).
+    const boutonApercu = form.querySelector('[data-role="apercu-image"]');
+    const popupApercu = form.querySelector('[data-role="apercu-popup"]');
+    const imgApercu = form.querySelector('[data-role="apercu-popup-img"]');
+    boutonApercu.addEventListener("mouseenter", function () {
       const url = form.querySelector('[data-role="image"]').value.trim();
-      const img = document.getElementById("apercu-image-contenu");
-      const erreur = document.getElementById("apercu-image-erreur");
-      erreur.hidden = true;
-      img.hidden = false;
-      img.onerror = function () { img.hidden = true; erreur.hidden = false; };
-      img.src = url;
-      openModal(document.getElementById("modal-apercu-image"));
+      if (!url) { popupApercu.hidden = true; return; }
+      imgApercu.onerror = function () { popupApercu.hidden = true; };
+      imgApercu.src = url;
+      popupApercu.hidden = false;
+    });
+    boutonApercu.addEventListener("mouseleave", function () {
+      popupApercu.hidden = true;
     });
 
     // Traduction IA des mots-clés : uniquement en mode manuel — les modes
