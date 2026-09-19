@@ -243,8 +243,8 @@
         restaurerFiltresDepuisUrl_();
         rafraichirToutesLesFacettes_();
         appliquerFiltres_();
-        construireFormulaire_(formIA);
-        construireFormulaire_(formManuel);
+        construireFormulaire_(formIA, false);
+        construireFormulaire_(formManuel, true);
       })
       .catch(function (erreur) {
         // Aléa ponctuel côté infrastructure Google (réponse non-JSON, etc.) :
@@ -887,7 +887,7 @@
    * peuple ses listes de niveau/thème/type/langue depuis les référentiels,
    * et branche la saisie de mots-clés + l'option "Autre" + la soumission.
    */
-  function construireFormulaire_(form) {
+  function construireFormulaire_(form, estManuel) {
     form.innerHTML = "";
     form.appendChild(gabaritFormulaire.content.cloneNode(true));
     form.__motsCles = [];
@@ -964,11 +964,82 @@
     brancherTagInput_(form, "mots-cles", "__motsCles");
     brancherTagInput_(form, "keywords", "__keywords");
 
+    // Aperçu de l'image : ouvre la modale partagée avec l'URL actuellement saisie.
+    form.querySelector('[data-role="apercu-image"]').addEventListener("click", function () {
+      const url = form.querySelector('[data-role="image"]').value.trim();
+      const img = document.getElementById("apercu-image-contenu");
+      const erreur = document.getElementById("apercu-image-erreur");
+      erreur.hidden = true;
+      img.hidden = false;
+      img.onerror = function () { img.hidden = true; erreur.hidden = false; };
+      img.src = url;
+      openModal(document.getElementById("modal-apercu-image"));
+    });
+
+    // Traduction IA des mots-clés : uniquement en mode manuel — les modes
+    // IA/import ont déjà les deux langues, générées ensemble par leur IA.
+    const boutonTraduire = form.querySelector('[data-role="traduire-mots-cles"]');
+    if (estManuel) {
+      boutonTraduire.hidden = false;
+      boutonTraduire.addEventListener("click", function () { traduireMotsClesFormulaire_(form); });
+    }
+
     // Soumission
     form.addEventListener("submit", function (evenement) {
       evenement.preventDefault();
       soumettreFormulaire_(form);
     });
+  }
+
+  /**
+   * Traduit les mots-clés du formulaire manuel par IA, dans le sens qui a
+   * du contenu à traduire (FR->EN si mots_cles est rempli et keywords vide,
+   * ou l'inverse). Un échec (quota épuisé, etc.) affiche juste une erreur —
+   * l'enregistrement de la ressource reste possible sans traduction.
+   */
+  function traduireMotsClesFormulaire_(form) {
+    const erreurEl = form.querySelector('[data-role="traduction-erreur"]');
+    erreurEl.hidden = true;
+
+    const motsClesRemplis = form.__motsCles.length > 0;
+    const keywordsRemplis = form.__keywords.length > 0;
+
+    let direction, motsSource, proprieteCible, roleCible;
+    if (motsClesRemplis && !keywordsRemplis) {
+      direction = "vers_en"; motsSource = form.__motsCles; proprieteCible = "__keywords"; roleCible = "keywords";
+    } else if (keywordsRemplis && !motsClesRemplis) {
+      direction = "vers_fr"; motsSource = form.__keywords; proprieteCible = "__motsCles"; roleCible = "mots-cles";
+    } else {
+      erreurEl.textContent = langueCourante_() === "EN"
+        ? "Fill in only one of the two keyword lists before translating."
+        : "Remplissez une seule des deux listes de mots-clés avant de traduire.";
+      erreurEl.hidden = false;
+      return;
+    }
+
+    const params = new URLSearchParams({
+      action: "traduireMotsCles",
+      token: TOKEN_FRONTEND,
+      origin: ORIGIN_DECLARE,
+      direction: direction,
+      mots: JSON.stringify(motsSource)
+    });
+
+    fetch(APPS_SCRIPT_URL + "?" + params.toString())
+      .then(function (reponse) { return reponse.json(); })
+      .then(function (resultat) {
+        if (resultat.erreur) {
+          erreurEl.textContent = resultat.erreur;
+          erreurEl.hidden = false;
+          return;
+        }
+        form[proprieteCible] = resultat.traduction || [];
+        form["__reafficher_" + roleCible]();
+      })
+      .catch(function (erreur) {
+        erreurEl.textContent = (langueCourante_() === "EN" ? "Network error: " : "Erreur réseau : ") + erreur.message;
+        erreurEl.hidden = false;
+      });
   }
 
   /**
@@ -1186,6 +1257,7 @@
     if (form["__reafficher_keywords"]) form["__reafficher_keywords"]();
     form.querySelectorAll(".chip").forEach(function (chip) { chip.setAttribute("aria-pressed", "false"); });
     form.querySelectorAll(".form-alerte").forEach(function (alerte) { alerte.hidden = true; });
+    form.querySelectorAll(".form-erreur").forEach(function (erreur) { erreur.hidden = true; });
     const toggleAutre = form.querySelector('[data-role="type-autre-active"]');
     if (toggleAutre) toggleAutre.checked = false;
     const champsAutre = form.querySelector('[data-role="type-autre-champs"]');
