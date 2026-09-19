@@ -508,6 +508,18 @@ body {
   letter-spacing: 0.02em;
 }
 
+.form-aide {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin: -0.15rem 0 0.4rem;
+}
+
+.btn--sm {
+  font-size: 0.78rem;
+  padding: 0.35rem 0.7rem;
+  margin-top: 0.4rem;
+}
+
 /* =========================================================
    FORMULAIRE "PROPOSER UNE RESSOURCE" (IA + manuel)
    ========================================================= */
