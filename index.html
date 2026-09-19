@@ -487,6 +487,22 @@
 </div>
 
 <!-- ========================================================= -->
+<!-- MODALE : APERÇU DE L'IMAGE (partagée par les 3 modes)       -->
+<!-- ========================================================= -->
+<div class="modal-overlay" id="modal-apercu-image" hidden>
+  <div class="modal modal--small" role="dialog" aria-modal="true" aria-labelledby="modal-apercu-image-title">
+    <button type="button" class="modal__close" data-close-modal aria-label="Fermer">&times;</button>
+    <h2 id="modal-apercu-image-title" data-fr="Aperçu de l'image" data-en="Image preview">Aperçu de l'image</h2>
+    <img id="apercu-image-contenu" src="" alt="" style="max-width: 100%; border-radius: 8px; display: block;">
+    <p id="apercu-image-erreur" class="form-erreur" hidden
+       data-fr="Impossible de charger cette image — vérifiez l'adresse collée."
+       data-en="Unable to load this image — check the pasted address.">
+      Impossible de charger cette image — vérifiez l'adresse collée.
+    </p>
+  </div>
+</div>
+
+<!-- ========================================================= -->
 <!-- MODALE : PROPOSER UNE RESSOURCE (structure, à compléter)    -->
 <!-- ========================================================= -->
 <div class="modal-overlay" id="modal-add-resource" hidden>
@@ -645,7 +661,14 @@
 
   <div class="form-group" data-champ="image">
     <label data-fr="Image (URL, facultatif)" data-en="Image (URL, optional)">Image (URL, facultatif)</label>
+    <p class="form-aide"
+       data-fr="Pour ajouter une image, clic droit sur l'image → « Copier l'adresse de l'image », puis collez-la ici."
+       data-en="To add an image, right-click the image → “Copy image address”, then paste it here.">
+      Pour ajouter une image, clic droit sur l'image → « Copier l'adresse de l'image », puis collez-la ici.
+    </p>
     <input type="url" class="filter-input" data-role="image" placeholder="https://…">
+    <button type="button" class="btn btn--ghost btn--sm" data-role="apercu-image"
+            data-fr="Aperçu de l'image" data-en="Image preview">Aperçu de l'image</button>
   </div>
 
   <div class="form-group" data-champ="theme">
@@ -698,6 +721,10 @@
            data-fr-placeholder="Taper un mot-clé puis Entrée" data-en-placeholder="Type a keyword then Enter"
            placeholder="Taper un mot-clé puis Entrée">
   </div>
+
+  <button type="button" class="btn btn--ghost btn--sm" data-role="traduire-mots-cles" hidden
+          data-fr="Traduire par IA" data-en="Translate with AI">Traduire par IA</button>
+  <p class="form-erreur" data-role="traduction-erreur" hidden></p>
 
   <div class="form-group" data-champ="keywords">
     <label data-fr="Mots-clés (anglais)" data-en="Keywords (English)">Mots-clés (anglais)</label>
