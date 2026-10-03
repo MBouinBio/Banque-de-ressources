@@ -47,6 +47,12 @@
   let ressourcesAffichees = [];
   let nombreCartesVisibles = 0;
 
+  // Ordre d'affichage des ressources (indépendant des 8 filtres) : "recent"
+  // (par défaut, exigé par l'utilisatrice) ou "ancien". Repose sur la colonne
+  // date_ajout au format AAAAMMJJ (ex. 20261003), directement comparable en
+  // chaîne sans conversion.
+  let ordreTri = "recent";
+
   // État courant des 8 filtres. Valeur unique (chaîne) pour les menus
   // déroulants à choix unique ; Set pour les catégories multi-sélection
   // (OU à l'intérieur d'une catégorie, ET entre catégories différentes).
@@ -116,6 +122,12 @@
     }
     const current = htmlEl.getAttribute("data-lang") === "EN" ? "EN" : "FR";
     applyLang(current === "EN" ? "FR" : "EN");
+    // Le libellé du bouton de tri dépend à la fois de la langue et de
+    // ordreTri : ne peut pas passer par le mécanisme générique data-fr/
+    // data-en d'applyLang. Appelé ici (pas depuis applyLang elle-même, qui
+    // est aussi invoquée une fois de façon synchrone dès le chargement du
+    // script, avant que boutonTriToggle — déclaré en section 6 — n'existe).
+    mettreAJourLibelleTri_();
   });
 
   // Lecture initiale de l'URL au chargement (?lang=EN)
@@ -241,6 +253,7 @@
         donneesChargees = true;
 
         restaurerFiltresDepuisUrl_();
+        mettreAJourLibelleTri_();
         rafraichirToutesLesFacettes_();
         appliquerFiltres_();
         construireFormulaire_(formIA, false);
@@ -462,6 +475,7 @@
   const elFiltreEtablissement = document.getElementById("filter-etablissement");
   const elFiltreMotsCles = document.getElementById("filter-keywords");
   const boutonReset = document.getElementById("btn-reset-filters");
+  const boutonTriToggle = document.getElementById("btn-toggle-tri");
 
   function langueCourante_() {
     return htmlEl.getAttribute("data-lang") === "EN" ? "EN" : "FR";
@@ -772,11 +786,25 @@
   }
 
   /**
-   * Applique l'ensemble des filtres, réaffiche la grille depuis le début,
-   * et met à jour l'URL.
+   * Compare deux ressources par date_ajout (AAAAMMJJ), selon ordreTri.
+   * Comparaison de chaînes directe : le format est construit pour que
+   * l'ordre lexicographique coïncide avec l'ordre chronologique.
+   */
+  function comparerParDate_(a, b) {
+    const da = String(a.date_ajout || "");
+    const db = String(b.date_ajout || "");
+    if (da === db) return 0;
+    return ordreTri === "ancien" ? (da < db ? -1 : 1) : (da < db ? 1 : -1);
+  }
+
+  /**
+   * Applique l'ensemble des filtres, trie le résultat (date_ajout), réaffiche
+   * la grille depuis le début, et met à jour l'URL.
    */
   function appliquerFiltres_() {
-    ressourcesAffichees = toutesLesRessources.filter(function (r) { return correspondAuxFiltres_(r, null); });
+    ressourcesAffichees = toutesLesRessources
+      .filter(function (r) { return correspondAuxFiltres_(r, null); })
+      .sort(comparerParDate_);
     nombreCartesVisibles = 0;
     afficherLotSuivant();
     actualiserUrlFiltres_();
@@ -809,6 +837,9 @@
     definir("par", filtres.proposePar);
     definir("etablissement", filtres.etablissement);
     definir("motscles", Array.from(filtres.motsCles).join(","));
+    // Tri : paramètre absent de l'URL quand c'est la valeur par défaut
+    // ("recent"), pour ne pas alourdir les liens partagés inutilement.
+    definir("tri", ordreTri !== "recent" ? ordreTri : "");
     history.replaceState(null, "", "?" + params.toString());
   }
 
@@ -830,6 +861,8 @@
     filtres.proposePar = params.get("par") || "";
     filtres.etablissement = params.get("etablissement") || "";
     (params.get("motscles") || "").split(",").filter(Boolean).forEach(function (m) { filtres.motsCles.add(m); });
+
+    ordreTri = params.get("tri") === "ancien" ? "ancien" : "recent";
   }
 
   // --- Écouteurs des filtres simples (texte + menus déroulants) ---
@@ -852,6 +885,29 @@
   elFiltreEtablissement.addEventListener("change", function () {
     filtres.etablissement = elFiltreEtablissement.value;
     surChangementFiltre_();
+  });
+
+  /**
+   * Met à jour le libellé du bouton de tri selon la langue courante ET
+   * l'ordre actif — ne peut pas reposer sur le mécanisme générique
+   * data-fr/data-en (qui ignore l'état ordreTri), donc recalculé ici.
+   */
+  function mettreAJourLibelleTri_() {
+    const lang = langueCourante_();
+    if (ordreTri === "recent") {
+      boutonTriToggle.textContent = lang === "EN" ? "Sort: newest first" : "Trier : plus récent d'abord";
+    } else {
+      boutonTriToggle.textContent = lang === "EN" ? "Sort: oldest first" : "Trier : plus ancien d'abord";
+    }
+  }
+
+  // Le tri n'affecte aucune facette (les options disponibles des 8 filtres
+  // ne changent pas selon l'ordre d'affichage) : on appelle directement
+  // appliquerFiltres_(), pas surChangementFiltre_().
+  boutonTriToggle.addEventListener("click", function () {
+    ordreTri = ordreTri === "recent" ? "ancien" : "recent";
+    mettreAJourLibelleTri_();
+    appliquerFiltres_();
   });
 
   boutonReset.addEventListener("click", function () {
@@ -1004,6 +1060,7 @@
   function traduireMotsClesFormulaire_(form) {
     const erreurEl = form.querySelector('[data-role="traduction-erreur"]');
     erreurEl.hidden = true;
+    const boutonTraduire = form.querySelector('[data-role="traduire-mots-cles"]');
 
     const motsClesRemplis = form.__motsCles.length > 0;
     const keywordsRemplis = form.__keywords.length > 0;
@@ -1029,6 +1086,14 @@
       mots: JSON.stringify(motsSource)
     });
 
+    // Retour visuel pendant l'attente (même principe que "Analyser" et
+    // "Générer le prompt") : bouton désactivé + libellé "en cours", restauré
+    // dans tous les cas (succès, erreur applicative, erreur réseau) via
+    // .finally(), à partir des attributs data-fr/data-en déjà présents sur
+    // le bouton pour ne pas dupliquer son libellé normal ici.
+    boutonTraduire.disabled = true;
+    boutonTraduire.textContent = langueCourante_() === "EN" ? "Translating…" : "Traduction en cours…";
+
     fetch(APPS_SCRIPT_URL + "?" + params.toString())
       .then(function (reponse) { return reponse.json(); })
       .then(function (resultat) {
@@ -1043,6 +1108,10 @@
       .catch(function (erreur) {
         erreurEl.textContent = (langueCourante_() === "EN" ? "Network error: " : "Erreur réseau : ") + erreur.message;
         erreurEl.hidden = false;
+      })
+      .finally(function () {
+        boutonTraduire.disabled = false;
+        boutonTraduire.textContent = langueCourante_() === "EN" ? boutonTraduire.dataset.en : boutonTraduire.dataset.fr;
       });
   }
 
