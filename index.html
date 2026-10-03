@@ -399,10 +399,16 @@
   <!-- GRILLE DE RESSOURCES                                    -->
   <!-- ----------------------------------------------------- -->
   <main class="main-content">
-    <p class="result-count" id="result-count">
-      <span id="result-count-number">0</span>
-      <span data-fr="ressource(s) trouvée(s)" data-en="resource(s) found">ressource(s) trouvée(s)</span>
-    </p>
+    <div class="result-bar">
+      <p class="result-count" id="result-count">
+        <span id="result-count-number">0</span>
+        <span data-fr="ressource(s) trouvée(s)" data-en="resource(s) found">ressource(s) trouvée(s)</span>
+      </p>
+      <button type="button" class="btn btn--ghost btn--sm" id="btn-toggle-tri"
+              data-fr="Trier : plus récent d'abord" data-en="Sort: newest first">
+        Trier : plus récent d'abord
+      </button>
+    </div>
 
     <div class="card-grid" id="card-grid">
       <p class="card-grid__etat" id="card-grid-etat"
